@@ -45,12 +45,14 @@ public class RequesterChestMenu extends ChestMenu {
 		for (int row = 0; row < 3; row++) {
 			for (int column = 0; column < 9; column++) {
 				int slot = column + row * 9;
-				this.slots.set(slot, new Slot(
+				Slot replacement = new Slot(
 						this.getContainer(),
 						slot,
 						8 + column * 18,
 						80 + row * 18
-				));
+				);
+				replacement.index = slot;
+				this.slots.set(slot, replacement);
 			}
 		}
 
@@ -58,23 +60,27 @@ public class RequesterChestMenu extends ChestMenu {
 			for (int column = 0; column < 9; column++) {
 				int slot = 27 + column + row * 9;
 				int inventorySlot = 9 + column + row * 9;
-				this.slots.set(slot, new Slot(
+				Slot replacement = new Slot(
 						inventory,
 						inventorySlot,
 						8 + column * 18,
 						135 + row * 18
-				));
+				);
+				replacement.index = slot;
+				this.slots.set(slot, replacement);
 			}
 		}
 
 		for (int column = 0; column < 9; column++) {
 			int slot = 54 + column;
-			this.slots.set(slot, new Slot(
+			Slot replacement = new Slot(
 					inventory,
 					column,
 					8 + column * 18,
 					193
-			));
+			);
+			replacement.index = slot;
+			this.slots.set(slot, replacement);
 		}
 
 		for (int row = 0; row < 2; row++) {
