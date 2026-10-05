@@ -230,6 +230,15 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 	private static Container getContainer(ServerLevel level, BlockPos pos, boolean ignoreBlocked) {
 		var state = level.getBlockState(pos);
+		BlockEntity entity = level.getBlockEntity(pos);
+
+		// Requester chests use their existing ChestBlockEntity inventory directly.
+		// ChestBlock.getContainer() is for normal chest-block interaction and does
+		// not provide the requester copper chest destination used by this behavior.
+		if (entity instanceof RequesterChestAccess && entity instanceof Container requesterContainer) {
+			return requesterContainer;
+		}
+
 		if (!(state.getBlock() instanceof ChestBlock chestBlock)) return null;
 		return ChestBlock.getContainer(chestBlock, state, level, pos, ignoreBlocked);
 	}
