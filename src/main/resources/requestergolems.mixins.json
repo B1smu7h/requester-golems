@@ -5,8 +5,7 @@
 	"mixins": [
 		"CopperGolemMixin",
 		"ChestBlockEntityMixin",
-		"ChestBlockMixin",
-		"ChestOpenMixin"
+		"ChestBlockMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
