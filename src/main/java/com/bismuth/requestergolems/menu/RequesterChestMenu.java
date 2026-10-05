@@ -1,6 +1,7 @@
 package com.bismuth.requestergolems.menu;
 
 import com.bismuth.requestergolems.RequesterChestAccess;
+import com.mojang.logging.LogUtils;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -10,8 +11,10 @@ import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import org.slf4j.Logger;
 
 public class RequesterChestMenu extends AbstractContainerMenu {
+	private static final Logger LOGGER = LogUtils.getLogger();
 	public static final int REQUEST_SLOT_COUNT = RequesterChestAccess.REQUEST_SLOT_COUNT;
 	public static final int CHEST_SLOT_START = REQUEST_SLOT_COUNT;
 	public static final int CHEST_SLOT_END = CHEST_SLOT_START + 27;
@@ -130,8 +133,10 @@ public class RequesterChestMenu extends AbstractContainerMenu {
 
 	@Override
 	public void removed(Player player) {
+		LOGGER.info("RequesterChestMenu removed for {} (server={})", player.getName().getString(), !player.level().isClientSide());
 		super.removed(player);
 		if (chestContainer instanceof ChestBlockEntity chest) {
+			LOGGER.info("RequesterChestMenu calling stopOpen on {}", chest.getBlockPos());
 			chest.stopOpen(player);
 		}
 	}
