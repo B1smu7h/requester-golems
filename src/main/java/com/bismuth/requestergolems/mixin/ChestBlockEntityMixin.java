@@ -26,7 +26,7 @@ import net.minecraft.core.NonNullList;
 @Mixin(ChestBlockEntity.class)
 public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	private static final String REQUESTER_KEY = "requestergolems:requester";
-	private static final String REQUESTS_KEY = "requestergolems:requests";
+	private static final String REQUEST_KEY_PREFIX = "requestergolems:request_";
 
 	private boolean requestergolems$requester;
 	private final NonNullList<ItemStack> requestergolems$requests =
@@ -75,11 +75,11 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	private void requestergolems$save(ValueOutput output, CallbackInfo ci) {
 		output.putBoolean(REQUESTER_KEY, this.requestergolems$requester);
 
-		ValueOutput.TypedOutputList<ItemStack> requests =
-				output.list(REQUESTS_KEY, ItemStack.CODEC);
-
-		for (ItemStack request : this.requestergolems$requests) {
-			requests.add(request);
+		for (int slot = 0; slot < RequesterChestAccess.REQUEST_SLOT_COUNT; slot++) {
+			ItemStack request = this.requestergolems$requests.get(slot);
+			if (!request.isEmpty()) {
+				output.store(REQUEST_KEY_PREFIX + slot, ItemStack.CODEC, request);
+			}
 		}
 	}
 
@@ -87,18 +87,11 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	private void requestergolems$load(ValueInput input, CallbackInfo ci) {
 		this.requestergolems$requester = input.getBooleanOr(REQUESTER_KEY, false);
 
-		var requests = input.listOrEmpty(REQUESTS_KEY, ItemStack.CODEC);
-		int slot = 0;
-		for (ItemStack request : requests) {
-			if (slot >= RequesterChestAccess.REQUEST_SLOT_COUNT) {
-				break;
-			}
-
-			this.requestergolems$requests.set(slot++, request);
-		}
-
-		while (slot < RequesterChestAccess.REQUEST_SLOT_COUNT) {
-			this.requestergolems$requests.set(slot++, ItemStack.EMPTY);
+		for (int slot = 0; slot < RequesterChestAccess.REQUEST_SLOT_COUNT; slot++) {
+			this.requestergolems$requests.set(
+					slot,
+					input.read(REQUEST_KEY_PREFIX + slot, ItemStack.CODEC).orElse(ItemStack.EMPTY)
+			);
 		}
 	}
 }
