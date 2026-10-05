@@ -8,17 +8,15 @@ import net.minecraft.world.entity.player.Inventory;
 
 public class RequesterChestScreen extends AbstractContainerScreen<RequesterChestMenu> {
 	public RequesterChestScreen(RequesterChestMenu menu, Inventory inventory, Component title) {
-		super(menu, inventory, Component.translatable("container.requestergolems.requester_chest"), 176, 222);
+		super(menu, inventory, Component.translatable("container.requestergolems.requester_chest"), 176, 284);
 		this.titleLabelX = 8;
 		this.titleLabelY = 6;
 		this.inventoryLabelX = 8;
-		this.inventoryLabelY = 112;
+		this.inventoryLabelY = 185;
 	}
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-		// Simple vanilla-style first-pass background. The actual item rendering
-		// is handled by AbstractContainerScreen after this method returns.
 		graphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth, this.topPos + this.imageHeight, 0xFFC6C6C6);
 
 		// Request area.
@@ -37,31 +35,47 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			}
 		}
 
+		// Active jobs. Clicking an occupied slot cancels that transaction.
+		graphics.fill(this.leftPos + 4, this.topPos + 64, this.leftPos + this.imageWidth - 4, this.topPos + 120, 0xFF8B8B8B);
+		graphics.centeredText(
+				this.font,
+				Component.translatable("container.requestergolems.active_jobs"),
+				this.leftPos + this.imageWidth / 2,
+				this.topPos + 66,
+				0x404040
+		);
+
+		for (int row = 0; row < 2; row++) {
+			for (int column = 0; column < 5; column++) {
+				drawSlot(graphics, this.leftPos + 43 + column * 18, this.topPos + 72 + row * 18);
+			}
+		}
+
 		// Physical chest inventory.
-		graphics.fill(this.leftPos + 4, this.topPos + 64, this.leftPos + this.imageWidth - 4, this.topPos + 121, 0xFF8B8B8B);
+		graphics.fill(this.leftPos + 4, this.topPos + 124, this.leftPos + this.imageWidth - 4, this.topPos + 181, 0xFF8B8B8B);
 		graphics.text(
 				this.font,
 				Component.translatable("container.requestergolems.storage"),
 				this.leftPos + 8,
-				this.topPos + 65,
+				this.topPos + 125,
 				0x404040
 		);
 
 		for (int row = 0; row < 3; row++) {
 			for (int column = 0; column < 9; column++) {
-				drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 79 + row * 18);
+				drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 128 + row * 18);
 			}
 		}
 
 		// Player inventory.
 		for (int row = 0; row < 3; row++) {
 			for (int column = 0; column < 9; column++) {
-				drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 135 + row * 18);
+				drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 201 + row * 18);
 			}
 		}
 
 		for (int column = 0; column < 9; column++) {
-			drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 193);
+			drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 255);
 		}
 	}
 
