@@ -15,12 +15,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 
 public class RequesterChestMenu extends ChestMenu {
+	private static final int CHEST_SLOT_COUNT = 27;
 	public static final int REQUEST_SLOT_COUNT = RequesterChestAccess.REQUEST_SLOT_COUNT;
-	public static final int ACTIVE_REQUEST_SLOT_START = CHEST_SLOT_COUNT + Inventory.INVENTORY_SIZE + REQUEST_SLOT_COUNT;
+	private static final int REQUEST_SLOT_START = CHEST_SLOT_COUNT + Inventory.INVENTORY_SIZE;
+	public static final int ACTIVE_REQUEST_SLOT_START = REQUEST_SLOT_START + REQUEST_SLOT_COUNT;
 	public static final int ACTIVE_REQUEST_SLOT_COUNT = 64;
 
-	private static final int CHEST_SLOT_COUNT = 27;
-	private static final int REQUEST_SLOT_START = CHEST_SLOT_COUNT + Inventory.INVENTORY_SIZE;
 	private static final int REQUEST_X = 8;
 	private static final int REQUEST_Y = 94;
 
