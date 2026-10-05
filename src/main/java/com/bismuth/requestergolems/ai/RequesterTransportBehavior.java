@@ -26,6 +26,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	private static final int REQUEST_RANGE_HORIZONTAL = 32;
 	private static final int REQUEST_RANGE_VERTICAL = 8;
 	private static final int TARGET_INTERACTION_TICKS = 20;
+	private static final int RETRY_COOLDOWN_TICKS = 40;
 
 	private BlockPos requesterChestPos;
 	private BlockPos sourceChestPos;
@@ -33,6 +34,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	private boolean carrying;
 	private int interactionTicks;
 	private InteractionPhase interactionPhase = InteractionPhase.NONE;
+	private int retryCooldownTicks;
 
 	private enum InteractionPhase {
 		NONE,
@@ -46,6 +48,10 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 	@Override
 	protected boolean checkExtraStartConditions(ServerLevel level, CopperGolem body) {
+		if (this.retryCooldownTicks > 0) {
+			this.retryCooldownTicks--;
+			return false;
+		}
 		if (!(body instanceof RequesterGolemAccess access) || !access.requestergolems$isRequester()) {
 			return false;
 		}
@@ -73,6 +79,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		if (this.sourceChestPos == null) {
 			requesterChest.requestergolems$returnJob(this.job);
 			this.reset();
+			this.retryCooldownTicks = RETRY_COOLDOWN_TICKS;
 			return;
 		}
 
@@ -93,7 +100,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			if (this.sourceChestPos == null) {
 				this.sourceChestPos = this.findSourceChest(level, body, this.job);
 				if (this.sourceChestPos == null) {
-					this.returnJob(level);
+					this.failAndRetry(level);
 					return;
 				}
 			}
@@ -106,7 +113,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 			Container source = getContainer(level, this.sourceChestPos, false);
 			if (source == null) {
-				this.returnJob(level);
+				this.failAndRetry(level);
 				return;
 			}
 
@@ -129,7 +136,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 					body.clearOpenedChestPos();
 					body.setState(CopperGolemState.GETTING_NO_ITEM);
 					this.interactionPhase = InteractionPhase.NONE;
-					this.returnJob(level);
+					this.failAndRetry(level);
 					return;
 				}
 
@@ -140,7 +147,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				this.interactionPhase = InteractionPhase.NONE;
 				if (picked.isEmpty()) {
 					body.setState(CopperGolemState.GETTING_NO_ITEM);
-					this.returnJob(level);
+					this.failAndRetry(level);
 					return;
 				}
 
@@ -205,7 +212,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				} else {
 					// Partial source fulfillment: put the remaining quantity back
 					// into the requester chest job queue.
-					this.returnJob(level);
+					this.failAndRetry(level);
 				}
 			}
 		}
@@ -420,6 +427,12 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			ItemStack remainder = insertIntoContainer(source, carried.copy());
 			body.setItemSlot(EquipmentSlot.MAINHAND, remainder);
 		}
+	}
+
+	private void failAndRetry(ServerLevel level) {
+		this.returnJob(level);
+		this.reset();
+		this.retryCooldownTicks = RETRY_COOLDOWN_TICKS;
 	}
 
 	private void returnJob(ServerLevel level) {
