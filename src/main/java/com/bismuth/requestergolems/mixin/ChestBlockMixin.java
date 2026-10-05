@@ -7,6 +7,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.CopperChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -30,6 +32,41 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(BlockBehaviour.class)
 public abstract class ChestBlockMixin {
+	@Inject(method = "isSignalSource", at = @At("HEAD"), cancellable = true)
+	private void requestergolems$isCompletionSignalSource(
+			BlockState state,
+			CallbackInfoReturnable<Boolean> cir
+	) {
+		if (state.getBlock() instanceof CopperChestBlock
+				&& state.getBlock() instanceof net.minecraft.world.level.block.Block
+				&& cir.getReturnValue() == null) {
+			return;
+		}
+		if (state.getBlock() instanceof CopperChestBlock) {
+			// The block entity is checked by getSignal; this only marks requester
+			// copper chests as possible signal sources.
+			cir.setReturnValue(true);
+		}
+	}
+
+	@Inject(method = "getSignal", at = @At("HEAD"), cancellable = true)
+	private void requestergolems$getCompletionSignal(
+			BlockState state,
+			BlockGetter level,
+			BlockPos pos,
+			Direction direction,
+			CallbackInfoReturnable<Integer> cir
+	) {
+		if (!(state.getBlock() instanceof CopperChestBlock)) return;
+		BlockEntity blockEntity = level.getBlockEntity(pos);
+		if (blockEntity instanceof RequesterChestAccess requester
+				&& requester.requestergolems$isRequester()
+				&& requester.requestergolems$isCompletionPulseActive()) {
+			cir.setReturnValue(15);
+		}
+	}
+
+
 	@Inject(method = "neighborChanged", at = @At("TAIL"))
 	private void requestergolems$detectRedstone(
 			BlockState state,
