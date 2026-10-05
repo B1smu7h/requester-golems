@@ -5,10 +5,10 @@ import java.util.UUID;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Persistent role and request-slot state layered onto a vanilla chest.
+ * Persistent role, request-slot, request, and transport state layered onto a vanilla chest.
  */
 public interface RequesterChestAccess {
-	int REQUEST_SLOT_COUNT = 10;
+	int REQUEST_SLOT_COUNT = 9;
 
 	boolean requestergolems$isRequester();
 	void requestergolems$setRequester(boolean requester);
@@ -20,10 +20,18 @@ public interface RequesterChestAccess {
 	boolean requestergolems$isCompletionPulseActive();
 	void requestergolems$clearCompletionPulse();
 
+	/** Activates each non-empty request slot as a separate high-level request. */
 	void requestergolems$activateRequests();
+
+	boolean requestergolems$hasActiveRequests();
+	List<RequesterRequest> requestergolems$getActiveRequests();
+	boolean requestergolems$isRequestActive(UUID requestId);
+	boolean requestergolems$cancelRequest(UUID requestId);
+	void requestergolems$deliverToRequest(UUID requestId, int amount);
+
+	/** Internal transport chunks used by requester golems. */
 	boolean requestergolems$hasActiveJobs();
 	List<RequesterJob> requestergolems$getActiveJobs();
-
 	RequesterJob requestergolems$claimJob();
 	void requestergolems$returnJob(RequesterJob job);
 	boolean requestergolems$isJobActive(UUID jobId);
