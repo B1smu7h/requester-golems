@@ -153,7 +153,6 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 				body.setItemSlot(EquipmentSlot.MAINHAND, picked);
 				body.setState(CopperGolemState.IDLE);
-				this.job.shrink(picked.getCount());
 				this.carrying = true;
 				body.getNavigation().moveTo(
 						this.requesterChestPos.getX() + 0.5,
@@ -206,6 +205,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
+		this.job.shrink(delivered);
 		body.setItemSlot(EquipmentSlot.MAINHAND, remainder);
 		this.carrying = !remainder.isEmpty();
 
