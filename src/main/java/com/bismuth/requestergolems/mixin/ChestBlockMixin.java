@@ -12,6 +12,8 @@ import net.minecraft.world.level.block.CopperChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,6 +29,36 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(BlockBehaviour.class)
 public abstract class ChestBlockMixin {
+	@Inject(method = "neighborChanged", at = @At("TAIL"))
+	private void requestergolems$detectRedstone(
+			BlockState state,
+			Level level,
+			BlockPos pos,
+			net.minecraft.world.level.block.Block block,
+			Orientation orientation,
+			boolean movedByPiston,
+			CallbackInfo ci
+	) {
+		if (level.isClientSide() || !(state.getBlock() instanceof CopperChestBlock)) {
+			return;
+		}
+
+		BlockEntity blockEntity = level.getBlockEntity(pos);
+		if (!(blockEntity instanceof RequesterChestAccess requesterChest)
+				|| !requesterChest.requestergolems$isRequester()) {
+			return;
+		}
+
+		boolean powered = level.hasNeighborSignal(pos);
+		boolean wasPowered = requesterChest.requestergolems$isRedstonePowered();
+		if (powered != wasPowered) {
+			requesterChest.requestergolems$setRedstonePowered(powered);
+			if (powered) {
+				requesterChest.requestergolems$activateRequests();
+			}
+		}
+	}
+
 	@Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
 	private void requestergolems$convertWithDiamond(
 			ItemStack itemStack,
