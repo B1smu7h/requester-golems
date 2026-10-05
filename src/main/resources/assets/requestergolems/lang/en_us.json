@@ -2,5 +2,6 @@
 	"container.requestergolems.requester_chest": "Requester Chest",
 	"container.requestergolems.requests": "Requests",
 	"container.requestergolems.active_requests": "Active Requests",
+	"container.requestergolems.cancel_request": "Click to cancel",
 	"container.requestergolems.storage": "Storage"
 }
