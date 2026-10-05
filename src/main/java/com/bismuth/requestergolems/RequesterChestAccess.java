@@ -1,14 +1,18 @@
 package com.bismuth.requestergolems;
 
+import net.minecraft.world.item.ItemStack;
+
 /**
- * Persistent role state added to vanilla chest block entities.
- *
- * <p>The underlying block and inventory remain vanilla. Requester mode is
- * metadata layered on top, which lets the same Copper Chest later expose
- * requester controls without introducing a second chest block.</p>
+ * Persistent role and request-slot state layered onto a vanilla chest.
  */
 public interface RequesterChestAccess {
+	int REQUEST_SLOT_COUNT = 10;
+
 	boolean requestergolems$isRequester();
 
 	void requestergolems$setRequester(boolean requester);
+
+	ItemStack requestergolems$getRequest(int slot);
+
+	void requestergolems$setRequest(int slot, ItemStack stack);
 }
