@@ -4,7 +4,7 @@ import com.bismuth.requestergolems.ai.RequesterTransportBehavior;
 import com.mojang.datafixers.util.Pair;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.world.entity.ai.ActivityData;
-import net.minecraft.world.entity.ai.BehaviorControl;
+import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import net.minecraft.world.entity.animal.golem.CopperGolem;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
