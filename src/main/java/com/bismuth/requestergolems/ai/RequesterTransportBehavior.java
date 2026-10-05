@@ -109,6 +109,19 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			}
 		}
 
+		// A cancellation can remove the job while the golem is still carrying
+		// items. Finish the rollback path without ever dereferencing a null job.
+		if (this.job == null) {
+			if (this.carrying) {
+				this.returnCarriedToSource(level, body);
+				this.carrying = !body.getMainHandItem().isEmpty();
+			}
+			if (!this.carrying) {
+				this.reset();
+			}
+			return;
+		}
+
 		if (!this.carrying) {
 			if (this.sourceChestPos == null) {
 				this.sourceChestPos = this.findSourceChest(level, body, this.job.stack());
