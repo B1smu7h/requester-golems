@@ -20,7 +20,6 @@ public class RequesterChestMenu extends ChestMenu {
 	private static final int REQUEST_SLOT_START = CHEST_SLOT_COUNT + Inventory.INVENTORY_SIZE;
 	public static final int ACTIVE_REQUEST_SLOT_START = REQUEST_SLOT_START + REQUEST_SLOT_COUNT;
 	public static final int ACTIVE_REQUEST_SLOT_COUNT = 64;
-	private static final int ACTIVE_REQUEST_BUTTON_BASE = 1000;
 	private static final int SETTINGS_VISIBLE_COUNT = 3;
 
 	private static final int REQUEST_X = 8;
@@ -70,7 +69,7 @@ public class RequesterChestMenu extends ChestMenu {
 						this.getContainer(),
 						slot,
 						8 + column * 18,
-						24 + row * 18
+						18 + row * 18
 				);
 				replacement.index = slot;
 				this.slots.set(slot, replacement);
@@ -85,7 +84,7 @@ public class RequesterChestMenu extends ChestMenu {
 						inventory,
 						inventorySlot,
 						8 + column * 18,
-						126 + row * 18
+						127 + row * 18
 				);
 				replacement.index = slot;
 				this.slots.set(slot, replacement);
@@ -98,7 +97,7 @@ public class RequesterChestMenu extends ChestMenu {
 						inventory,
 						column,
 						8 + column * 18,
-						180
+						185
 			);
 			replacement.index = slot;
 			this.slots.set(slot, replacement);
@@ -148,7 +147,7 @@ public class RequesterChestMenu extends ChestMenu {
 						this.getContainer(),
 						slot,
 						settingsView ? -1000 : 8 + column * 18,
-						settingsView ? -1000 : 24 + row * 18
+						settingsView ? -1000 : 18 + row * 18
 				);
 				replacement.index = slot;
 				this.slots.set(slot, replacement);
@@ -163,7 +162,7 @@ public class RequesterChestMenu extends ChestMenu {
 						this.playerInventory,
 						inventorySlot,
 						settingsView ? -1000 : 8 + column * 18,
-						settingsView ? -1000 : 126 + row * 18
+						settingsView ? -1000 : 127 + row * 18
 				);
 				replacement.index = slot;
 				this.slots.set(slot, replacement);
@@ -176,7 +175,7 @@ public class RequesterChestMenu extends ChestMenu {
 						this.playerInventory,
 						column,
 						settingsView ? -1000 : 8 + column * 18,
-						settingsView ? -1000 : 180
+						settingsView ? -1000 : 185
 			);
 			replacement.index = slot;
 			this.slots.set(slot, replacement);
@@ -257,16 +256,6 @@ public class RequesterChestMenu extends ChestMenu {
 				this.activeRequestContainer.setItem(slot, ItemStack.EMPTY);
 			}
 		}
-	}
-
-	@Override
-	public boolean clickMenuButton(Player player, int buttonId) {
-		if (buttonId >= ACTIVE_REQUEST_BUTTON_BASE
-				&& buttonId < ACTIVE_REQUEST_BUTTON_BASE + ACTIVE_REQUEST_SLOT_COUNT) {
-			this.requestergolems$cancelActiveRequest(buttonId - ACTIVE_REQUEST_BUTTON_BASE);
-			return true;
-		}
-		return super.clickMenuButton(player, buttonId);
 	}
 
 	@Override
