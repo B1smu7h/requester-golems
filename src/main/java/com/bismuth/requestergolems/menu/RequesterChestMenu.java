@@ -137,8 +137,8 @@ public class RequesterChestMenu extends ChestMenu {
 				Slot replacement = new Slot(
 						this.getContainer(),
 						slot,
-						settingsView ? -100 : 8 + column * 18,
-						settingsView ? -100 : 24 + row * 18
+						settingsView ? -1000 : 8 + column * 18,
+						settingsView ? -1000 : 24 + row * 18
 				);
 				replacement.index = slot;
 				this.slots.set(slot, replacement);
@@ -152,8 +152,8 @@ public class RequesterChestMenu extends ChestMenu {
 				Slot replacement = new Slot(
 						this.playerInventory,
 						inventorySlot,
-						settingsView ? -100 : 8 + column * 18,
-						settingsView ? -100 : 126 + row * 18
+						settingsView ? -1000 : 8 + column * 18,
+						settingsView ? -1000 : 126 + row * 18
 				);
 				replacement.index = slot;
 				this.slots.set(slot, replacement);
@@ -165,8 +165,8 @@ public class RequesterChestMenu extends ChestMenu {
 			Slot replacement = new Slot(
 						this.playerInventory,
 						column,
-						settingsView ? -100 : 8 + column * 18,
-						settingsView ? -100 : 180
+						settingsView ? -1000 : 8 + column * 18,
+						settingsView ? -1000 : 180
 			);
 			replacement.index = slot;
 			this.slots.set(slot, replacement);
@@ -177,8 +177,8 @@ public class RequesterChestMenu extends ChestMenu {
 			Slot replacement = new Slot(
 						this.requestContainer,
 						column,
-						settingsView ? -100 : REQUEST_X + column * 18,
-						settingsView ? -100 : REQUEST_Y
+						settingsView ? -1000 : REQUEST_X + column * 18,
+						settingsView ? -1000 : REQUEST_Y
 			);
 			replacement.index = slot;
 			this.slots.set(slot, replacement);
