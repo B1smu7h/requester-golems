@@ -1,12 +1,7 @@
 package com.bismuth.requestergolems.mixin;
 
 import com.bismuth.requestergolems.RequesterChestAccess;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.CopperChestBlock;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -14,19 +9,24 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import net.minecraft.core.NonNullList;
 
 /**
- * Adds requester-mode metadata to vanilla chest block entities.
+ * Adds requester-mode metadata and ten persistent request slots to vanilla
+ * chest block entities.
  *
- * <p>The temporary diamond conversion is a development checkpoint. The
- * production conversion control will move into the requester chest UI.</p>
+ * <p>The underlying 27-slot chest inventory remains untouched. Request slots
+ * are a separate data model and will later be presented by the requester
+ * chest menu.</p>
  */
 @Mixin(ChestBlockEntity.class)
 public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	private static final String REQUESTER_KEY = "requestergolems:requester";
+	private static final String REQUESTS_KEY = "requestergolems:requests";
 
 	private boolean requestergolems$requester;
+	private final NonNullList<ItemStack> requestergolems$requests =
+			NonNullList.withSize(RequesterChestAccess.REQUEST_SLOT_COUNT, ItemStack.EMPTY);
 
 	@Override
 	public boolean requestergolems$isRequester() {
@@ -38,40 +38,52 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 		this.requestergolems$requester = requester;
 	}
 
+	@Override
+	public ItemStack requestergolems$getRequest(int slot) {
+		if (slot < 0 || slot >= RequesterChestAccess.REQUEST_SLOT_COUNT) {
+			throw new IndexOutOfBoundsException("Invalid requester slot: " + slot);
+		}
+		return this.requestergolems$requests.get(slot);
+	}
+
+	@Override
+	public void requestergolems$setRequest(int slot, ItemStack stack) {
+		if (slot < 0 || slot >= RequesterChestAccess.REQUEST_SLOT_COUNT) {
+			throw new IndexOutOfBoundsException("Invalid requester slot: " + slot);
+		}
+
+		this.requestergolems$requests.set(slot, stack.copy());
+		((ChestBlockEntity) (Object) this).setChanged();
+	}
+
 	@Inject(method = "saveAdditional", at = @At("TAIL"))
 	private void requestergolems$save(ValueOutput output, CallbackInfo ci) {
 		output.putBoolean(REQUESTER_KEY, this.requestergolems$requester);
+
+		ValueOutput.TypedOutputList<ItemStack> requests =
+				output.list(REQUESTS_KEY, ItemStack.CODEC);
+
+		for (ItemStack request : this.requestergolems$requests) {
+			requests.add(request);
+		}
 	}
 
 	@Inject(method = "loadAdditional", at = @At("TAIL"))
 	private void requestergolems$load(ValueInput input, CallbackInfo ci) {
 		this.requestergolems$requester = input.getBooleanOr(REQUESTER_KEY, false);
-	}
 
-	@Inject(
-			method = "startOpen",
-			at = @At("HEAD"),
-			cancellable = true
-	)
-	private void requestergolems$convertCopperChest(Player player, CallbackInfo ci) {
-		if (this.requestergolems$requester
-				|| player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()
-				|| !player.getItemInHand(InteractionHand.MAIN_HAND).is(Items.DIAMOND)) {
-			return;
+		var requests = input.listOrEmpty(REQUESTS_KEY, ItemStack.CODEC);
+		int slot = 0;
+		for (ItemStack request : requests) {
+			if (slot >= RequesterChestAccess.REQUEST_SLOT_COUNT) {
+				break;
+			}
+
+			this.requestergolems$requests.set(slot++, request);
 		}
 
-		ChestBlockEntity chest = (ChestBlockEntity) (Object) this;
-		if (!(chest.getBlockState().getBlock() instanceof CopperChestBlock)) {
-			return;
+		while (slot < RequesterChestAccess.REQUEST_SLOT_COUNT) {
+			this.requestergolems$requests.set(slot++, ItemStack.EMPTY);
 		}
-
-		if (!player.level().isClientSide()) {
-			this.requestergolems$requester = true;
-			player.getItemInHand(InteractionHand.MAIN_HAND).consume(1, player);
-			chest.setCustomName(Component.literal("Requester Chest"));
-			chest.setChanged();
-		}
-
-		ci.cancel();
 	}
 }
