@@ -24,11 +24,20 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	private static final int REQUEST_RANGE_HORIZONTAL = 32;
 	private static final int REQUEST_RANGE_VERTICAL = 8;
 	private static final double INTERACTION_DISTANCE_SQR = 3.0;
+	private static final int TARGET_INTERACTION_TICKS = 20;
 
 	private BlockPos requesterChestPos;
 	private BlockPos sourceChestPos;
 	private ItemStack job = ItemStack.EMPTY;
 	private boolean carrying;
+	private int interactionTicks;
+	private InteractionPhase interactionPhase = InteractionPhase.NONE;
+
+	private enum InteractionPhase {
+		NONE,
+		PICKING_UP,
+		DROPPING_OFF
+	}
 
 	public RequesterTransportBehavior() {
 		super(java.util.Map.of(), 1200);
@@ -66,7 +75,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
-		body.setState(CopperGolemState.GETTING_ITEM);
+		body.setState(CopperGolemState.IDLE);
 		body.getNavigation().moveTo(
 				this.sourceChestPos.getX() + 0.5,
 				this.sourceChestPos.getY(),
@@ -105,30 +114,51 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				return;
 			}
 
-			int available = Math.max(0, countMatching(source, this.job) - 1);
-			if (available <= 0) {
-				this.returnJob(level);
+			if (this.interactionPhase == InteractionPhase.NONE) {
+				this.interactionPhase = InteractionPhase.PICKING_UP;
+				this.interactionTicks = TARGET_INTERACTION_TICKS;
+				body.setState(CopperGolemState.GETTING_ITEM);
+				body.setOpenedChestPos(this.sourceChestPos);
+				source.startOpen(body);
 				return;
 			}
 
-			int amount = Math.min(this.job.getCount(), Math.min(16, available));
-			ItemStack picked = this.interactWithContainer(body, level, this.sourceChestPos, source, () -> removeMatching(source, this.job, amount));
-			if (picked.isEmpty()) {
-				this.returnJob(level);
+			if (this.interactionPhase == InteractionPhase.PICKING_UP) {
+				if (--this.interactionTicks > 0) return;
+
+				int available = Math.max(0, countMatching(source, this.job) - 1);
+				if (available <= 0) {
+					source.stopOpen(body);
+					body.clearOpenedChestPos();
+					body.setState(CopperGolemState.GETTING_NO_ITEM);
+					this.interactionPhase = InteractionPhase.NONE;
+					this.returnJob(level);
+					return;
+				}
+
+				int amount = Math.min(this.job.getCount(), Math.min(16, available));
+				ItemStack picked = removeMatching(source, this.job, amount);
+				source.stopOpen(body);
+				body.clearOpenedChestPos();
+				this.interactionPhase = InteractionPhase.NONE;
+				if (picked.isEmpty()) {
+					body.setState(CopperGolemState.GETTING_NO_ITEM);
+					this.returnJob(level);
+					return;
+				}
+
+				body.setItemSlot(EquipmentSlot.MAINHAND, picked);
+				body.setState(CopperGolemState.DROPPING_ITEM);
+				this.job.shrink(picked.getCount());
+				this.carrying = true;
+				body.getNavigation().moveTo(
+						this.requesterChestPos.getX() + 0.5,
+						this.requesterChestPos.getY(),
+						this.requesterChestPos.getZ() + 0.5,
+						1.0
+				);
 				return;
 			}
-
-			body.setItemSlot(EquipmentSlot.MAINHAND, picked);
-			body.setState(CopperGolemState.DROPPING_ITEM);
-			this.job.shrink(picked.getCount());
-			this.carrying = true;
-			body.getNavigation().moveTo(
-					this.requesterChestPos.getX() + 0.5,
-					this.requesterChestPos.getY(),
-					this.requesterChestPos.getZ() + 0.5,
-					1.0
-			);
-			return;
 		}
 
 		Vec3 destination = Vec3.atCenterOf(this.requesterChestPos);
@@ -145,7 +175,21 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
-		ItemStack remainder = this.interactWithContainer(body, level, this.requesterChestPos, requester, () -> insertIntoContainer(requester, carried.copy()));
+		if (this.interactionPhase == InteractionPhase.NONE) {
+			this.interactionPhase = InteractionPhase.DROPPING_OFF;
+			this.interactionTicks = TARGET_INTERACTION_TICKS;
+			body.setState(CopperGolemState.DROPPING_ITEM);
+			body.setOpenedChestPos(this.requesterChestPos);
+			requester.startOpen(body);
+			return;
+		}
+
+		if (this.interactionPhase != InteractionPhase.DROPPING_OFF || --this.interactionTicks > 0) return;
+
+		ItemStack remainder = insertIntoContainer(requester, carried.copy());
+		requester.stopOpen(body);
+		body.clearOpenedChestPos();
+		this.interactionPhase = InteractionPhase.NONE;
 		int delivered = carried.getCount() - remainder.getCount();
 
 		if (delivered > 0) {
@@ -171,6 +215,14 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 	@Override
 	protected void stop(ServerLevel level, CopperGolem body, long timestamp) {
+		if (this.interactionPhase != InteractionPhase.NONE) {
+			BlockPos openPos = this.interactionPhase == InteractionPhase.PICKING_UP ? this.sourceChestPos : this.requesterChestPos;
+			if (openPos != null) {
+				Container openContainer = getContainer(level, openPos, false);
+				if (openContainer != null) openContainer.stopOpen(body);
+			}
+			body.clearOpenedChestPos();
+		}
 		if (this.carrying) {
 			this.returnCarriedToSource(level, body);
 		}
@@ -356,5 +408,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		this.sourceChestPos = null;
 		this.job = ItemStack.EMPTY;
 		this.carrying = false;
+		this.interactionTicks = 0;
+		this.interactionPhase = InteractionPhase.NONE;
 	}
 }
