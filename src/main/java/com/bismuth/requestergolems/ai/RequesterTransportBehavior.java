@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.animal.golem.CopperGolem;
+import net.minecraft.world.entity.animal.golem.CopperGolemState;
 import net.minecraft.world.entity.ai.behavior.Behavior;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -63,6 +64,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
+		body.setState(CopperGolemState.GETTING_ITEM);
 		body.getNavigation().moveTo(
 				this.sourceChestPos.getX() + 0.5,
 				this.sourceChestPos.getY(),
@@ -108,13 +110,14 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			}
 
 			int amount = Math.min(this.job.getCount(), Math.min(16, available));
-			ItemStack picked = removeMatching(source, this.job, amount);
+			ItemStack picked = this.interactWithContainer(body, level, this.sourceChestPos, source, true, () -> removeMatching(source, this.job, amount));
 			if (picked.isEmpty()) {
 				this.returnJob(level);
 				return;
 			}
 
 			body.setItemSlot(EquipmentSlot.MAINHAND, picked);
+			body.setState(CopperGolemState.DROPPING_ITEM);
 			this.job.shrink(picked.getCount());
 			this.carrying = true;
 			body.getNavigation().moveTo(
@@ -140,7 +143,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
-		ItemStack remainder = insertIntoContainer(requester, carried.copy());
+		ItemStack remainder = this.interactWithContainer(body, level, this.requesterChestPos, requester, false, () -> insertIntoContainer(requester, carried.copy()));
 		int delivered = carried.getCount() - remainder.getCount();
 
 		if (delivered > 0) {
@@ -172,6 +175,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		if (!this.job.isEmpty()) {
 			this.returnJob(level);
 		}
+		body.setState(CopperGolemState.IDLE);
 		this.reset();
 	}
 
@@ -241,6 +245,29 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 		if (!(state.getBlock() instanceof ChestBlock chestBlock)) return null;
 		return ChestBlock.getContainer(chestBlock, state, level, pos, ignoreBlocked);
+	}
+
+	@FunctionalInterface
+	private interface ContainerAction<T> {
+		T run();
+	}
+
+	private <T> T interactWithContainer(
+		CopperGolem body,
+		ServerLevel level,
+		BlockPos pos,
+		Container container,
+		boolean openingForPickup,
+		ContainerAction<T> action
+	) {
+		body.setOpenedChestPos(pos);
+		container.startOpen(body);
+		try {
+			return action.run();
+		} finally {
+			container.stopOpen(body);
+			body.clearOpenedChestPos();
+		}
 	}
 
 	private static int countMatching(Container container, ItemStack requested) {
