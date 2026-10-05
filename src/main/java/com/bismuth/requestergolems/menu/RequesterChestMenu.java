@@ -281,14 +281,30 @@ public class RequesterChestMenu extends ChestMenu {
 		super.clicked(slotIndex, buttonNum, input, player);
 	}
 
-	public void requestergolems$cancelActiveRequest(int requestIndex) {
-		if (!(this.requesterChest instanceof RequesterChestAccess access)) return;
+	public boolean requestergolems$cancelActiveRequest(int requestIndex) {
+		if (!(this.requesterChest instanceof RequesterChestAccess access)) {
+			com.bismuth.requestergolems.RequesterGolems.LOGGER.warn(
+					"Cancellation failed: requesterChest is null/not a RequesterChestAccess; index={}",
+					requestIndex
+			);
+			return false;
+		}
 
 		List<RequesterRequest> requests = access.requestergolems$getActiveRequests();
-		if (requestIndex >= 0 && requestIndex < requests.size()) {
-			access.requestergolems$cancelRequest(requests.get(requestIndex).id());
+		if (requestIndex < 0 || requestIndex >= requests.size()) {
+			com.bismuth.requestergolems.RequesterGolems.LOGGER.warn(
+					"Cancellation failed: index {} outside active request list of size {}",
+					requestIndex, requests.size()
+			);
+			return false;
+		}
+
+		RequesterRequest request = requests.get(requestIndex);
+		boolean cancelled = access.requestergolems$cancelRequest(request.id());
+		if (cancelled) {
 			broadcastChanges();
 		}
+		return cancelled;
 	}
 
 	@Override
