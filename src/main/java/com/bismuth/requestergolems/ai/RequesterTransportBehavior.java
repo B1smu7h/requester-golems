@@ -76,12 +76,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		}
 
 		body.setState(CopperGolemState.IDLE);
-		body.getNavigation().moveTo(
-				this.sourceChestPos.getX() + 0.5,
-				this.sourceChestPos.getY(),
-				this.sourceChestPos.getZ() + 0.5,
-				1.0
-		);
+		this.moveToContainer(level, body, this.sourceChestPos);
 	}
 
 	@Override
@@ -104,7 +99,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 			Vec3 target = Vec3.atCenterOf(this.sourceChestPos);
 			if (body.position().distanceToSqr(target) > INTERACTION_DISTANCE_SQR) {
-				body.getNavigation().moveTo(target.x, target.y, target.z, 1.0);
+				this.moveToContainer(level, body, this.sourceChestPos);
 				return;
 			}
 
@@ -163,7 +158,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 		Vec3 destination = Vec3.atCenterOf(this.requesterChestPos);
 		if (body.position().distanceToSqr(destination) > INTERACTION_DISTANCE_SQR) {
-			body.getNavigation().moveTo(destination.x, destination.y, destination.z, 1.0);
+			this.moveToContainer(level, body, this.requesterChestPos);
 			return;
 		}
 
@@ -231,6 +226,25 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		}
 		body.setState(CopperGolemState.IDLE);
 		this.reset();
+	}
+
+	private void moveToContainer(ServerLevel level, CopperGolem body, BlockPos containerPos) {
+		var state = level.getBlockState(containerPos);
+		var shape = state.getCollisionShape(level, containerPos);
+		var center = Vec3.atCenterOf(containerPos);
+		var direction = body.position().subtract(center);
+		if (direction.lengthSqr() < 0.0001) {
+			direction = new Vec3(0.0, 0.0, 1.0);
+		}
+		direction = direction.normalize();
+
+		// Approach from the side the golem is already on, rather than pathing
+		// directly to the container's center and climbing onto it.
+		Vec3 target = center.add(direction.scale(0.9));
+		if (shape.isEmpty()) {
+			target = center.add(direction.scale(0.9));
+		}
+		body.getNavigation().moveTo(target.x, containerPos.getY(), target.z, 1.0);
 	}
 
 	private BlockPos findRequesterChest(ServerLevel level, CopperGolem body) {
