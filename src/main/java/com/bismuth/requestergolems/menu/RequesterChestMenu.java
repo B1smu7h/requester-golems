@@ -75,7 +75,7 @@ public class RequesterChestMenu extends ChestMenu {
 						inventory,
 					inventorySlot,
 					8 + column * 18,
-					183 + row * 18
+					201 + row * 18
 				);
 				replacement.index = slot;
 				this.slots.set(slot, replacement);
@@ -88,7 +88,7 @@ public class RequesterChestMenu extends ChestMenu {
 					inventory,
 					column,
 					8 + column * 18,
-					237
+					255
 			);
 			replacement.index = slot;
 			this.slots.set(slot, replacement);
