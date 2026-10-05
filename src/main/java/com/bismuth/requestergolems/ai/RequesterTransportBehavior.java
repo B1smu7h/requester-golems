@@ -249,22 +249,13 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	}
 
 	private void moveToContainer(ServerLevel level, CopperGolem body, BlockPos containerPos) {
-		var state = level.getBlockState(containerPos);
-		var shape = state.getCollisionShape(level, containerPos);
-		var center = Vec3.atCenterOf(containerPos);
-		var direction = body.position().subtract(center);
-		if (direction.lengthSqr() < 0.0001) {
-			direction = new Vec3(0.0, 0.0, 1.0);
+		// Vanilla TransportItemsBetweenContainers paths to the container block itself
+		// and lets the pathfinder choose the adjacent walkable endpoint. Do the same
+		// here instead of inventing a point inside the container's collision shape.
+		var path = body.getNavigation().createPath(containerPos, 0);
+		if (path != null) {
+			body.getNavigation().moveTo(path, 1.0);
 		}
-		direction = direction.normalize();
-
-		// Approach from the side the golem is already on, rather than pathing
-		// directly to the container's center and climbing onto it.
-		Vec3 target = center.add(direction.scale(0.9));
-		if (shape.isEmpty()) {
-			target = center.add(direction.scale(0.9));
-		}
-		body.getNavigation().moveTo(target.x, containerPos.getY(), target.z, 1.0);
 	}
 
 	private BlockPos findRequesterChest(ServerLevel level, CopperGolem body) {
