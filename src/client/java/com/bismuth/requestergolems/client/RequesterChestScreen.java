@@ -46,13 +46,13 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		if (this.settingsMode) {
 			this.modeButton = this.addRenderableWidget(
 					Button.builder(Component.literal("<"), button -> this.setSettingsMode(false))
-							.bounds(this.leftPos + 148, this.topPos + 4, 24, 20)
+							.bounds(this.leftPos + 154, this.topPos + 2, 18, 16)
 							.build()
 			);
 		} else {
 			this.modeButton = this.addRenderableWidget(
 					Button.builder(Component.literal("⚙"), button -> this.setSettingsMode(true))
-							.bounds(this.leftPos + 148, this.topPos + 4, 24, 20)
+							.bounds(this.leftPos + 154, this.topPos + 2, 18, 16)
 							.build()
 			);
 		}
@@ -335,8 +335,8 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	}
 
 	private boolean isInsideModeButton(double mouseX, double mouseY) {
-		return mouseX >= this.leftPos + 148 && mouseX < this.leftPos + 172
-				&& mouseY >= this.topPos + 4 && mouseY < this.topPos + 24;
+		return mouseX >= this.leftPos + 154 && mouseX < this.leftPos + 172
+				&& mouseY >= this.topPos + 2 && mouseY < this.topPos + 18;
 	}
 
 	private boolean isInsideSettingsList(double mouseX, double mouseY) {
