@@ -116,6 +116,15 @@ public class RequesterChestMenu extends ChestMenu {
 	}
 
 	public void requestergolems$setActiveRequestView(int firstIndex) {
+		if (firstIndex < 0) {
+			for (int slot = 0; slot < ACTIVE_REQUEST_SLOT_COUNT; slot++) {
+				Slot replacement = new Slot(this.activeRequestContainer, slot, -1000, -1000);
+				replacement.index = ACTIVE_REQUEST_SLOT_START + slot;
+				this.slots.set(ACTIVE_REQUEST_SLOT_START + slot, replacement);
+			}
+			return;
+		}
+
 		int first = Math.max(0, Math.min(firstIndex, ACTIVE_REQUEST_SLOT_COUNT - SETTINGS_VISIBLE_COUNT));
 		for (int slot = 0; slot < ACTIVE_REQUEST_SLOT_COUNT; slot++) {
 			int visible = slot - first;
@@ -183,7 +192,7 @@ public class RequesterChestMenu extends ChestMenu {
 			replacement.index = slot;
 			this.slots.set(slot, replacement);
 		}
-		this.requestergolems$setActiveRequestView(0);
+		this.requestergolems$setActiveRequestView(settingsView ? 0 : -1);
 	}
 
 	@Override
