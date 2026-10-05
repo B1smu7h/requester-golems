@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 
 public class RequesterChestMenu extends ChestMenu {
 	public static final int REQUEST_SLOT_COUNT = RequesterChestAccess.REQUEST_SLOT_COUNT;
-	public static final int ACTIVE_REQUEST_SLOT_START = 72;
+	public static final int ACTIVE_REQUEST_SLOT_START = CHEST_SLOT_COUNT + Inventory.INVENTORY_SIZE + REQUEST_SLOT_COUNT;
 	public static final int ACTIVE_REQUEST_SLOT_COUNT = 64;
 
 	private static final int CHEST_SLOT_COUNT = 27;
@@ -27,6 +27,7 @@ public class RequesterChestMenu extends ChestMenu {
 	private final Container requestContainer;
 	private final SimpleContainer activeRequestContainer;
 	private final ChestBlockEntity requesterChest;
+	private final Inventory playerInventory;
 	private final int[] activeRequestOriginalCounts = new int[ACTIVE_REQUEST_SLOT_COUNT];
 	private final int[] activeRequestRemainingCounts = new int[ACTIVE_REQUEST_SLOT_COUNT];
 	private final int[] activeRequestElapsedTicks = new int[ACTIVE_REQUEST_SLOT_COUNT];
@@ -49,6 +50,7 @@ public class RequesterChestMenu extends ChestMenu {
 		super(ModMenuTypes.REQUESTER_CHEST, containerId, inventory, chestContainer, 3);
 		this.requestContainer = requestContainer;
 		this.requesterChest = chest;
+		this.playerInventory = inventory;
 		this.activeRequestContainer = new SimpleContainer(ACTIVE_REQUEST_SLOT_COUNT);
 
 		for (int slot = 0; slot < ACTIVE_REQUEST_SLOT_COUNT; slot++) {
@@ -109,6 +111,53 @@ public class RequesterChestMenu extends ChestMenu {
 		// preserving their server-side slot IDs for cancellation clicks.
 		for (int slot = 0; slot < ACTIVE_REQUEST_SLOT_COUNT; slot++) {
 			addSlot(new Slot(activeRequestContainer, slot, -100, -100));
+		}
+	}
+
+	public void requestergolems$setSettingsView(boolean settingsView) {
+		for (int row = 0; row < 3; row++) {
+			for (int column = 0; column < 9; column++) {
+				int slot = column + row * 9;
+				this.slots.set(slot, new Slot(
+						this.getContainer(),
+						slot,
+						settingsView ? -100 : 8 + column * 18,
+						settingsView ? -100 : 24 + row * 18
+				));
+			}
+		}
+
+		for (int row = 0; row < 3; row++) {
+			for (int column = 0; column < 9; column++) {
+				int slot = 27 + column + row * 9;
+				int inventorySlot = 9 + column + row * 9;
+				this.slots.set(slot, new Slot(
+						this.playerInventory,
+						inventorySlot,
+						settingsView ? -100 : 8 + column * 18,
+						settingsView ? -100 : 126 + row * 18
+				));
+			}
+		}
+
+		for (int column = 0; column < 9; column++) {
+			int slot = 54 + column;
+			this.slots.set(slot, new Slot(
+						this.playerInventory,
+						column,
+						settingsView ? -100 : 8 + column * 18,
+						settingsView ? -100 : 180
+			));
+		}
+
+		for (int column = 0; column < REQUEST_SLOT_COUNT; column++) {
+			int slot = REQUEST_SLOT_START + column;
+			this.slots.set(slot, new Slot(
+						this.requestContainer,
+						column,
+						settingsView ? -100 : REQUEST_X + column * 18,
+						settingsView ? -100 : REQUEST_Y
+				));
 		}
 	}
 
