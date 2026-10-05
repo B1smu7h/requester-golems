@@ -107,20 +107,38 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		// The request row is inserted below the vanilla 3-row chest section.
 		// Do not sample rows 4-5 of generic_54 for the gap: those pixels contain
 		// more slot artwork, which is what caused the fake/void-looking region.
-		// Give the requester row its own small vanilla-style panel.
+		// Extend the vanilla container's side walls through the requester area.
+		// The center stays plain GUI background; only the left/right frame continues.
 		graphics.fill(
 				this.leftPos,
 				this.topPos + 71,
 				this.leftPos + this.imageWidth,
 				this.topPos + 114,
-				0xFF555555
-		);
-		graphics.fill(
-				this.leftPos + 1,
-				this.topPos + 72,
-				this.leftPos + this.imageWidth - 1,
-				this.topPos + 113,
 				0xFFC6C6C6
+		);
+		graphics.blit(
+				RenderPipelines.GUI_TEXTURED,
+				CONTAINER_TEXTURE,
+				this.leftPos,
+				this.topPos + 71,
+				0,
+				17,
+				7,
+				43,
+				256,
+				256
+		);
+		graphics.blit(
+				RenderPipelines.GUI_TEXTURED,
+				CONTAINER_TEXTURE,
+				this.leftPos + this.imageWidth - 7,
+				this.topPos + 71,
+				169,
+				17,
+				7,
+				43,
+				256,
+				256
 		);
 
 		graphics.blit(
