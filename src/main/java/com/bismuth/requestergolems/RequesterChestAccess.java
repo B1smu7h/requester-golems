@@ -12,6 +12,18 @@ public interface RequesterChestAccess {
 
 	void requestergolems$setRequester(boolean requester);
 
+	boolean requestergolems$isRedstonePowered();
+
+	void requestergolems$setRedstonePowered(boolean powered);
+
+	void requestergolems$activateRequests();
+
+	boolean requestergolems$hasActiveJobs();
+
+	ItemStack requestergolems$claimJob();
+
+	void requestergolems$returnJob(ItemStack job);
+
 	ItemStack requestergolems$getRequest(int slot);
 
 	void requestergolems$setRequest(int slot, ItemStack stack);
