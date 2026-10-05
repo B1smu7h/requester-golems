@@ -115,13 +115,6 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 						this.topPos + y + 5,
 						0x404040
 				);
-				graphics.text(
-						this.font,
-						Component.literal("×"),
-						this.leftPos + x + 72,
-						this.topPos + y + 5,
-						0x603030
-				);
 			}
 		}
 	}
