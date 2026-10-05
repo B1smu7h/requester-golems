@@ -23,7 +23,6 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	// This keeps separate bases from accidentally sharing workers across the server.
 	private static final int REQUEST_RANGE_HORIZONTAL = 32;
 	private static final int REQUEST_RANGE_VERTICAL = 8;
-	private static final double INTERACTION_DISTANCE_SQR = 4.0;
 	private static final int TARGET_INTERACTION_TICKS = 20;
 
 	private BlockPos requesterChestPos;
@@ -98,7 +97,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			}
 
 			Vec3 target = Vec3.atCenterOf(this.sourceChestPos);
-			if (body.position().distanceToSqr(target) > INTERACTION_DISTANCE_SQR) {
+			if (!this.isInContainerInteractionRange(level, body, this.sourceChestPos)) {
 				this.moveToContainer(level, body, this.sourceChestPos);
 				return;
 			}
@@ -157,7 +156,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		}
 
 		Vec3 destination = Vec3.atCenterOf(this.requesterChestPos);
-		if (body.position().distanceToSqr(destination) > INTERACTION_DISTANCE_SQR) {
+		if (!this.isInContainerInteractionRange(level, body, this.requesterChestPos)) {
 			this.moveToContainer(level, body, this.requesterChestPos);
 			return;
 		}
@@ -226,6 +225,26 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		}
 		body.setState(CopperGolemState.IDLE);
 		this.reset();
+	}
+
+	private boolean isInContainerInteractionRange(ServerLevel level, CopperGolem body, BlockPos containerPos) {
+		var state = level.getBlockState(containerPos);
+		var shape = state.getCollisionShape(level, containerPos);
+		if (shape.isEmpty()) {
+			return body.position().distanceToSqr(Vec3.atCenterOf(containerPos))
+					<= body.getContainerInteractionRange() * body.getContainerInteractionRange();
+		}
+
+		var bounds = shape.bounds().move(containerPos);
+		double closestX = Math.clamp(body.getX(), bounds.minX, bounds.maxX);
+		double closestY = Math.clamp(body.getY(), bounds.minY, bounds.maxY);
+		double closestZ = Math.clamp(body.getZ(), bounds.minZ, bounds.maxZ);
+		double dx = body.getX() - closestX;
+		double dy = body.getY() - closestY;
+		double dz = body.getZ() - closestZ;
+		double range = body.getContainerInteractionRange();
+
+		return dx * dx + dy * dy + dz * dz <= range * range;
 	}
 
 	private void moveToContainer(ServerLevel level, CopperGolem body, BlockPos containerPos) {
