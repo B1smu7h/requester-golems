@@ -69,7 +69,7 @@ public class RequesterChestMenu extends ChestMenu {
 						this.getContainer(),
 						slot,
 						8 + column * 18,
-						24 + row * 18
+						18 + row * 18
 				);
 				replacement.index = slot;
 				this.slots.set(slot, replacement);
@@ -147,7 +147,7 @@ public class RequesterChestMenu extends ChestMenu {
 						this.getContainer(),
 						slot,
 						settingsView ? -1000 : 8 + column * 18,
-						settingsView ? -1000 : 24 + row * 18
+						settingsView ? -1000 : 18 + row * 18
 				);
 				replacement.index = slot;
 				this.slots.set(slot, replacement);
