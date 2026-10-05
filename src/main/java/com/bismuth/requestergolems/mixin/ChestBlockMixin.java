@@ -14,7 +14,6 @@ import net.minecraft.world.level.block.CopperChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.core.Direction;
 import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
@@ -84,6 +83,13 @@ public abstract class ChestBlockMixin {
 		BlockEntity blockEntity = level.getBlockEntity(pos);
 		if (!(blockEntity instanceof RequesterChestAccess requesterChest)
 				|| !requesterChest.requestergolems$isRequester()) {
+			return;
+		}
+
+		// The completion pulse is an output from this chest. Its redstone
+		// propagation can travel through dust/repeaters and come back as a
+		// neighbor signal, which must never count as a new request trigger.
+		if (requesterChest.requestergolems$isCompletionPulseActive()) {
 			return;
 		}
 
