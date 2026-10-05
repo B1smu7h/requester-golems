@@ -19,8 +19,10 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.phys.Vec3;
 
 public class RequesterTransportBehavior extends Behavior<CopperGolem> {
-	private static final int SEARCH_HORIZONTAL = 32;
-	private static final int SEARCH_VERTICAL = 8;
+	// Requester logistics are scoped to a 32x8 search volume around the requester chest.
+	// This keeps separate bases from accidentally sharing workers across the server.
+	private static final int REQUEST_RANGE_HORIZONTAL = 32;
+	private static final int REQUEST_RANGE_VERTICAL = 8;
 	private static final double INTERACTION_DISTANCE_SQR = 3.0;
 
 	private BlockPos requesterChestPos;
@@ -110,7 +112,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			}
 
 			int amount = Math.min(this.job.getCount(), Math.min(16, available));
-			ItemStack picked = this.interactWithContainer(body, level, this.sourceChestPos, source, true, () -> removeMatching(source, this.job, amount));
+			ItemStack picked = this.interactWithContainer(body, level, this.sourceChestPos, source, () -> removeMatching(source, this.job, amount));
 			if (picked.isEmpty()) {
 				this.returnJob(level);
 				return;
@@ -143,7 +145,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
-		ItemStack remainder = this.interactWithContainer(body, level, this.requesterChestPos, requester, false, () -> insertIntoContainer(requester, carried.copy()));
+		ItemStack remainder = this.interactWithContainer(body, level, this.requesterChestPos, requester, () -> insertIntoContainer(requester, carried.copy()));
 		int delivered = carried.getCount() - remainder.getCount();
 
 		if (delivered > 0) {
@@ -182,11 +184,11 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	private BlockPos findRequesterChest(ServerLevel level, CopperGolem body) {
 		BlockPos best = null;
 		double bestDistance = Double.MAX_VALUE;
-		BlockPos center = body.blockPosition();
+		BlockPos center = this.requesterChestPos != null ? this.requesterChestPos : body.blockPosition();
 
 		for (BlockPos pos : BlockPos.betweenClosed(
-				center.offset(-SEARCH_HORIZONTAL, -SEARCH_VERTICAL, -SEARCH_HORIZONTAL),
-				center.offset(SEARCH_HORIZONTAL, SEARCH_VERTICAL, SEARCH_HORIZONTAL))) {
+				center.offset(-REQUEST_RANGE_HORIZONTAL, -REQUEST_RANGE_VERTICAL, -REQUEST_RANGE_HORIZONTAL),
+				center.offset(REQUEST_RANGE_HORIZONTAL, REQUEST_RANGE_VERTICAL, REQUEST_RANGE_HORIZONTAL))) {
 			BlockEntity entity = level.getBlockEntity(pos);
 			if (!(entity instanceof RequesterChestAccess requester)
 					|| !requester.requestergolems$isRequester()
@@ -257,7 +259,6 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		ServerLevel level,
 		BlockPos pos,
 		Container container,
-		boolean openingForPickup,
 		ContainerAction<T> action
 	) {
 		body.setOpenedChestPos(pos);
