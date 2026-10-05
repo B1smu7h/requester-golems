@@ -284,7 +284,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				return super.mouseClicked(event, doubleClick);
 			}
 
-			if (event.button() == 0 && this.isInsideSettingsList(event.x(), event.y())) {
+			if (event.button() == 1 && this.isInsideSettingsList(event.x(), event.y())) {
 				int visible = (int)((event.y() - (this.topPos + SETTINGS_LIST_TOP)) / SETTINGS_ROW_HEIGHT);
 				if (visible >= 0 && visible < SETTINGS_VISIBLE_ROWS) {
 					int index = this.scrollOffset + visible;
