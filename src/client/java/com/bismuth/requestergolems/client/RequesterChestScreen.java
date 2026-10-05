@@ -91,11 +91,14 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		// Compose the requester UI from the actual vanilla chest texture instead
 		// of hand-drawing slot borders. The storage and player-inventory sections
 		// now use the same artwork as a normal chest screen.
+		graphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth,
+				this.topPos + this.imageHeight, 0xFFC6C6C6);
+
 		graphics.blit(
 				RenderPipelines.GUI_TEXTURED,
 				CONTAINER_TEXTURE,
 				this.leftPos,
-				this.topPos,
+				this.topPos + 6,
 				0,
 				0,
 				this.imageWidth,
@@ -124,11 +127,11 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				RenderPipelines.GUI_TEXTURED,
 				CONTAINER_TEXTURE,
 				this.leftPos,
-				this.topPos + 114,
+				this.topPos + 120,
 				0,
-				126,
+				83,
 				this.imageWidth,
-				96,
+				84,
 				176,
 				222
 		);
@@ -274,9 +277,12 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 					int index = this.scrollOffset + visible;
 					if (index < this.menu.requestergolems$getActiveRequestCount()
 							&& this.minecraft.gameMode != null && this.minecraft.player != null) {
-						this.minecraft.gameMode.handleInventoryButtonClick(
+						this.minecraft.gameMode.handleContainerInput(
 								this.menu.containerId,
-								1000 + index
+								RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + index,
+								0,
+							net.minecraft.world.inventory.ContainerInput.PICKUP,
+								this.minecraft.player
 						);
 						this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 1.0F, 1.0F);
 						return true;
