@@ -64,22 +64,22 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	}
 
 
-\t@Override
-\tprotected void extractSlots(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-\t\tsuper.extractSlots(graphics, mouseX, mouseY);
-\t}
+	@Override
+	protected void extractSlots(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+		super.extractSlots(graphics, mouseX, mouseY);
+	}
 
-\t@Override
-\tprotected void extractSlot(GuiGraphicsExtractor graphics, Slot slot, int mouseX, int mouseY) {
-\t\tboolean activeRequestSlot = slot.index >= RequesterChestMenu.ACTIVE_REQUEST_SLOT_START
-\t\t\t\t&& slot.index < RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + RequesterChestMenu.ACTIVE_REQUEST_SLOT_COUNT;
+	@Override
+	protected void extractSlot(GuiGraphicsExtractor graphics, Slot slot, int mouseX, int mouseY) {
+		boolean activeRequestSlot = slot.index >= RequesterChestMenu.ACTIVE_REQUEST_SLOT_START
+				&& slot.index < RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + RequesterChestMenu.ACTIVE_REQUEST_SLOT_COUNT;
 
-\t\tif (this.settingsMode != activeRequestSlot) {
-\t\t\treturn;
-\t\t}
+		if (this.settingsMode != activeRequestSlot) {
+			return;
+		}
 
-\t\tsuper.extractSlot(graphics, slot, mouseX, mouseY);
-\t}
+		super.extractSlot(graphics, slot, mouseX, mouseY);
+	}
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
@@ -89,47 +89,47 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			return;
 		}
 
-\t\tgraphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth,
-\t\t\t\tthis.topPos + this.imageHeight, 0xFFC6C6C6);
+		graphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth,
+				this.topPos + this.imageHeight, 0xFFC6C6C6);
 
-\t\tgraphics.blit(
-\t\t\t\tRenderPipelines.GUI_TEXTURED,
-\t\t\t\tCONTAINER_TEXTURE,
-\t\t\t\tthis.leftPos,
-\t\t\t\tthis.topPos,
-\t\t\t\t0,
-\t\t\t\t0,
-\t\t\t\tthis.imageWidth,
-\t\t\t\t71,
-\t\t\t\t256,
-\t\t\t\t256
-\t\t);
+		graphics.blit(
+				RenderPipelines.GUI_TEXTURED,
+				CONTAINER_TEXTURE,
+				this.leftPos,
+				this.topPos,
+				0,
+				0,
+				this.imageWidth,
+				71,
+				256,
+				256
+		);
 
-\t\tgraphics.blit(
-\t\t\t\tRenderPipelines.GUI_TEXTURED,
-\t\t\t\tCONTAINER_TEXTURE,
-\t\t\t\tthis.leftPos,
-\t\t\t\tthis.topPos + 94,
-\t\t\t\t0,
-\t\t\t\t17,
-\t\t\t\tthis.imageWidth,
-\t\t\t\t18,
-\t\t\t\t256,
-\t\t\t\t256
-\t\t);
+		graphics.blit(
+				RenderPipelines.GUI_TEXTURED,
+				CONTAINER_TEXTURE,
+				this.leftPos,
+				this.topPos + 94,
+				0,
+				17,
+				this.imageWidth,
+				18,
+				256,
+				256
+		);
 
-\t\tgraphics.blit(
-\t\t\t\tRenderPipelines.GUI_TEXTURED,
-\t\t\t\tCONTAINER_TEXTURE,
-\t\t\t\tthis.leftPos,
-\t\t\t\tthis.topPos + 113,
-\t\t\t\t0,
-\t\t\t\t126,
-\t\t\t\tthis.imageWidth,
-\t\t\t\t96,
-\t\t\t\t256,
-\t\t\t\t256
-\t\t);
+		graphics.blit(
+				RenderPipelines.GUI_TEXTURED,
+				CONTAINER_TEXTURE,
+				this.leftPos,
+				this.topPos + 113,
+				0,
+				126,
+				this.imageWidth,
+				96,
+				256,
+				256
+		);
 
 	}
 
