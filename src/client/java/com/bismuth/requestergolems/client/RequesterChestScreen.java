@@ -10,12 +10,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public class RequesterChestScreen extends AbstractContainerScreen<RequesterChestMenu> {
 	private static final Identifier CONTAINER_TEXTURE = Identifier.withDefaultNamespace("textures/gui/container/generic_54.png");
-	private static final int MAIN_HEIGHT = 209;
+	private static final int MAIN_HEIGHT = 210;
 	private static final int SETTINGS_LIST_TOP = 28;
 	private static final int SETTINGS_LIST_BOTTOM = 92;
 	private static final int SETTINGS_ROW_HEIGHT = 20;
@@ -33,7 +34,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		this.titleLabelX = 8;
 		this.titleLabelY = 6;
 		this.inventoryLabelX = 8;
-		this.inventoryLabelY = 116;
+		this.inventoryLabelY = 117;
 	}
 
 	@Override
@@ -93,7 +94,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				RenderPipelines.GUI_TEXTURED,
 				CONTAINER_TEXTURE,
 				this.leftPos,
-				this.topPos + 6,
+				this.topPos,
 				0,
 				0,
 				this.imageWidth,
@@ -102,19 +103,15 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				256
 		);
 
-		// Fill the inserted gap with the same vanilla chest texture rather than
-		// a flat color, preserving the panel's border/shadow artwork.
-		graphics.blit(
-				RenderPipelines.GUI_TEXTURED,
-				CONTAINER_TEXTURE,
+		// The request row is inserted below the vanilla 3-row chest section.
+		// Do not sample rows 4-5 of generic_54 for the gap: those pixels contain
+		// more slot artwork, which is what caused the fake/void-looking region.
+		graphics.fill(
 				this.leftPos,
 				this.topPos + 71,
-				0,
-				71,
-				this.imageWidth,
-				23,
-				256,
-				256
+				this.leftPos + this.imageWidth,
+				this.topPos + 94,
+				0xFFC6C6C6
 		);
 
 		graphics.blit(
@@ -128,6 +125,14 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				18,
 				256,
 				256
+		);
+
+		graphics.fill(
+				this.leftPos,
+				this.topPos + 112,
+				this.leftPos + this.imageWidth,
+				this.topPos + 114,
+				0xFFC6C6C6
 		);
 
 		graphics.blit(
@@ -280,9 +285,12 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 					int index = this.scrollOffset + visible;
 					if (index < this.menu.requestergolems$getActiveRequestCount()
 							&& this.minecraft.gameMode != null && this.minecraft.player != null) {
-						this.minecraft.gameMode.handleInventoryButtonClick(
+						this.minecraft.gameMode.handleContainerInput(
 								this.menu.containerId,
-								1000 + index
+								RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + index,
+								0,
+								ContainerInput.PICKUP,
+								this.minecraft.player
 						);
 						return true;
 					}
