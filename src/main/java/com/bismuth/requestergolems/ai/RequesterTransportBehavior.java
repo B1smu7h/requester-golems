@@ -231,8 +231,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		var state = level.getBlockState(containerPos);
 		var shape = state.getCollisionShape(level, containerPos);
 		if (shape.isEmpty()) {
-			return body.position().distanceToSqr(Vec3.atCenterOf(containerPos))
-					<= body.getContainerInteractionRange() * body.getContainerInteractionRange();
+			return body.position().distanceToSqr(Vec3.atCenterOf(containerPos)) <= 0.25;
 		}
 
 		var bounds = shape.bounds().move(containerPos);
@@ -242,9 +241,11 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		double dx = body.getX() - closestX;
 		double dy = body.getY() - closestY;
 		double dz = body.getZ() - closestZ;
-		double range = body.getContainerInteractionRange();
 
-		return dx * dx + dy * dy + dz * dz <= range * range;
+		// Vanilla TransportItemsBetweenContainers starts interaction when the
+		// golem is within 0.5 blocks of the target, rather than using the
+		// Copper Golem's broader container interaction range.
+		return dx * dx + dy * dy + dz * dz <= 0.25;
 	}
 
 	private void moveToContainer(ServerLevel level, CopperGolem body, BlockPos containerPos) {
