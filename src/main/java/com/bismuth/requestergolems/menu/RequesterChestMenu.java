@@ -127,8 +127,13 @@ public class RequesterChestMenu extends ChestMenu {
 	}
 
 	public int requestergolems$getActiveRequestOriginalCount(int slot) {
-		if (slot < 0 || slot >= ACTIVE_JOB_SLOT_COUNT) return 0;
+		if (slot < 0 || slot >= ACTIVE_REQUEST_SLOT_COUNT) return 0;
 		return this.activeRequestOriginalCounts[slot];
+	}
+
+	public int requestergolems$getActiveRequestRemainingCount(int slot) {
+		if (slot < 0 || slot >= ACTIVE_REQUEST_SLOT_COUNT) return 0;
+		return this.activeRequestRemainingCounts[slot];
 	}
 
 	private void requestergolems$syncActiveRequests() {
@@ -144,7 +149,7 @@ public class RequesterChestMenu extends ChestMenu {
 					: ItemStack.EMPTY;
 			ItemStack current = this.activeRequestContainer.getItem(slot);
 			if (!current.equals(desired)) {
-				this.activeJobContainer.setItem(slot, desired);
+				this.activeRequestContainer.setItem(slot, desired);
 			}
 		}
 	}
