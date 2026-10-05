@@ -100,11 +100,8 @@ public class RequesterChestMenu extends ChestMenu {
 			this.slots.set(slot, replacement);
 		}
 
-		for (int row = 0; row < 2; row++) {
-			for (int column = 0; column < 5; column++) {
-				int slot = column + row * 5;
-				addSlot(new Slot(requestContainer, slot, REQUEST_X + column * 18, REQUEST_Y + row * 18));
-			}
+		for (int column = 0; column < REQUEST_SLOT_COUNT; column++) {
+			addSlot(new Slot(requestContainer, column, REQUEST_X + column * 18, REQUEST_Y));
 		}
 
 		for (int row = 0; row < 5; row++) {
