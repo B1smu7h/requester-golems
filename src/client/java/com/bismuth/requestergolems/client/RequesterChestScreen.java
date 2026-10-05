@@ -88,11 +88,13 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 	@Override
 	protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+		super.extractLabels(graphics, mouseX, mouseY);
+
 		graphics.text(
 				this.font,
 				this.playerInventoryTitle,
-				this.leftPos + this.inventoryLabelX,
-				this.topPos + this.inventoryLabelY,
+				this.inventoryLabelX,
+				this.inventoryLabelY,
 				0xFF404040
 		);
 
@@ -111,8 +113,8 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				graphics.text(
 						this.font,
 						Component.literal(progress),
-						this.leftPos + x + 20,
-						this.topPos + y + 5,
+						x + 20,
+						y + 5,
 						0xFF404040
 				);
 			}
