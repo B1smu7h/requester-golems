@@ -281,7 +281,7 @@ public class RequesterChestMenu extends ChestMenu {
 		super.clicked(slotIndex, buttonNum, input, player);
 	}
 
-	private void requestergolems$cancelActiveRequest(int requestIndex) {
+	public void requestergolems$cancelActiveRequest(int requestIndex) {
 		if (!(this.requesterChest instanceof RequesterChestAccess access)) return;
 
 		List<RequesterRequest> requests = access.requestergolems$getActiveRequests();
