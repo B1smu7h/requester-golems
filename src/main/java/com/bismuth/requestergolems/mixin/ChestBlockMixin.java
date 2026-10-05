@@ -32,19 +32,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(BlockBehaviour.class)
 public abstract class ChestBlockMixin {
-	@Inject(method = "isSignalSource", at = @At("HEAD"), cancellable = true)
-	private void requestergolems$isCompletionSignalSource(
+	@Inject(method = "shouldRedstoneWireConnectTo", at = @At("HEAD"), cancellable = true)
+	private void requestergolems$connectCompletionSignal(
 			BlockState state,
+			BlockGetter level,
+			BlockPos pos,
+			Direction direction,
 			CallbackInfoReturnable<Boolean> cir
 	) {
-		if (state.getBlock() instanceof CopperChestBlock
-				&& state.getBlock() instanceof net.minecraft.world.level.block.Block
-				&& cir.getReturnValue() == null) {
-			return;
-		}
-		if (state.getBlock() instanceof CopperChestBlock) {
-			// The block entity is checked by getSignal; this only marks requester
-			// copper chests as possible signal sources.
+		if (!(state.getBlock() instanceof CopperChestBlock)) return;
+		BlockEntity blockEntity = level.getBlockEntity(pos);
+		if (blockEntity instanceof RequesterChestAccess requester
+				&& requester.requestergolems$isRequester()
+				&& requester.requestergolems$isCompletionPulseActive()) {
 			cir.setReturnValue(true);
 		}
 	}
