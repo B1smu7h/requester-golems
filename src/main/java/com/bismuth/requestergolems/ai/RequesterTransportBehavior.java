@@ -197,24 +197,26 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		this.interactionPhase = InteractionPhase.NONE;
 		int delivered = carried.getCount() - remainder.getCount();
 
-		if (delivered > 0) {
-			body.setItemSlot(EquipmentSlot.MAINHAND, remainder);
-			this.carrying = !remainder.isEmpty();
+		if (delivered <= 0) {
+			// The destination accepted nothing. Roll the carried stack back to
+			// normal storage instead of hammering a full/blocked requester chest.
+			body.setItemSlot(EquipmentSlot.MAINHAND, carried);
+			this.carrying = true;
+			this.failAndRetry(level);
+			return;
+		}
 
-			if (this.job.isEmpty()) {
-				if (!this.carrying) {
-					this.reset();
-				}
-			} else {
-				if (this.carrying) {
-					// The same physical job is still being delivered; keep walking
-					// against the destination until it accepts the stack.
-				} else {
-					// Partial source fulfillment: put the remaining quantity back
-					// into the requester chest job queue.
-					this.failAndRetry(level);
-				}
+		body.setItemSlot(EquipmentSlot.MAINHAND, remainder);
+		this.carrying = !remainder.isEmpty();
+
+		if (this.job.isEmpty()) {
+			if (!this.carrying) {
+				this.reset();
 			}
+		} else if (!this.carrying) {
+			// Partial source fulfillment: put the remaining quantity back
+			// into the requester chest job queue.
+			this.failAndRetry(level);
 		}
 	}
 
