@@ -49,9 +49,6 @@ public class RequesterChestMenu extends AbstractContainerMenu {
 		this.requestContainer = requestContainer;
 		this.chestContainer = chestContainer;
 
-		if (chest != null) {
-			chest.startOpen(inventory.player);
-		}
 
 		for (int row = 0; row < 2; row++) {
 			for (int column = 0; column < 5; column++) {
