@@ -255,7 +255,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		if (this.carrying) {
 			this.returnCarriedToSource(level, body);
 		}
-		if (!this.job == null) {
+		if (this.job != null) {
 			this.returnJob(level);
 		}
 		body.setState(CopperGolemState.IDLE);
