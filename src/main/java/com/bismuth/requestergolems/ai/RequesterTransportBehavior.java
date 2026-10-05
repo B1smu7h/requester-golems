@@ -100,7 +100,8 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		if (this.job != null) {
 			BlockEntity jobChestEntity = level.getBlockEntity(this.requesterChestPos);
 			if (!(jobChestEntity instanceof RequesterChestAccess jobChest)
-					|| !jobChest.requestergolems$isJobActive(this.job.id())) {
+					|| !jobChest.requestergolems$isJobActive(this.job.id())
+					|| !jobChest.requestergolems$isRequestActive(this.job.requestId())) {
 				this.returnCarriedToSource(level, body);
 				this.job = null;
 				this.carrying = !body.getMainHandItem().isEmpty();
@@ -231,15 +232,23 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
+		BlockEntity destinationEntity = level.getBlockEntity(this.requesterChestPos);
+		if (!(destinationEntity instanceof RequesterChestAccess requesterAccess)
+				|| !requesterAccess.requestergolems$isRequestActive(this.job.requestId())) {
+			// The parent request was cancelled between pickup and delivery. The
+			// destination must not receive items for a dead transaction.
+			body.setItemSlot(EquipmentSlot.MAINHAND, carried);
+			this.carrying = true;
+			this.failAndRetry(level, body);
+			return;
+		}
+
+		// Only successful insertion counts toward the high-level request.
+		// Transport chunks remain an implementation detail of the parent request.
+		requesterAccess.requestergolems$deliverToRequest(this.job.requestId(), delivered);
 		this.job.stack().shrink(delivered);
 		if (this.job.isComplete()) {
-			BlockEntity destinationEntity = level.getBlockEntity(this.requesterChestPos);
-			if (destinationEntity instanceof RequesterChestAccess requesterAccess) {
-				requesterAccess.requestergolems$completeJob(this.job.id());
-				if (!requesterAccess.requestergolems$hasActiveJobs()) {
-					requesterAccess.requestergolems$emitCompletionPulse();
-				}
-			}
+			requesterAccess.requestergolems$completeJob(this.job.id());
 		}
 		body.setItemSlot(EquipmentSlot.MAINHAND, remainder);
 		this.carrying = !remainder.isEmpty();
@@ -317,7 +326,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			BlockEntity entity = level.getBlockEntity(pos);
 			if (!(entity instanceof RequesterChestAccess requester)
 					|| !requester.requestergolems$isRequester()
-					|| !requester.requestergolems$hasActiveJobs()) {
+					|| !requester.requestergolems$hasActiveRequests()) {
 				continue;
 			}
 
