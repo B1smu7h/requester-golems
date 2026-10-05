@@ -8,6 +8,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.animal.golem.CopperGolem;
 import net.minecraft.world.entity.animal.golem.CopperGolemState;
 import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.ai.behavior.BehaviorUtils;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -16,6 +17,7 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.CopperChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class RequesterTransportBehavior extends Behavior<CopperGolem> {
@@ -229,33 +231,33 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 	private boolean isInContainerInteractionRange(ServerLevel level, CopperGolem body, BlockPos containerPos) {
 		var state = level.getBlockState(containerPos);
-		var shape = state.getCollisionShape(level, containerPos);
-		if (shape.isEmpty()) {
-			return body.position().distanceToSqr(Vec3.atCenterOf(containerPos)) <= 0.25;
-		}
+		double range = this.getInteractionRange(body);
+		AABB targetBounds = state.getCollisionShape(level, containerPos)
+				.bounds()
+				.inflate(range, 0.5, range)
+				.move(containerPos);
+		AABB bodyBounds = AABB.ofSize(
+				this.getMiddleYPosition(body),
+				body.getBoundingBox().getXsize(),
+				body.getBoundingBox().getYsize(),
+				body.getBoundingBox().getZsize()
+		);
+		return targetBounds.intersects(bodyBounds);
+	}
 
-		var bounds = shape.bounds().move(containerPos);
-		double closestX = Math.clamp(body.getX(), bounds.minX, bounds.maxX);
-		double closestY = Math.clamp(body.getY(), bounds.minY, bounds.maxY);
-		double closestZ = Math.clamp(body.getZ(), bounds.minZ, bounds.maxZ);
-		double dx = body.getX() - closestX;
-		double dy = body.getY() - closestY;
-		double dz = body.getZ() - closestZ;
+	private double getInteractionRange(CopperGolem body) {
+		return body.getNavigation().isDone() ? 1.0 : 0.5;
+	}
 
-		// Vanilla TransportItemsBetweenContainers starts interaction when the
-		// golem is within 0.5 blocks of the target, rather than using the
-		// Copper Golem's broader container interaction range.
-		return dx * dx + dy * dy + dz * dz <= 0.25;
+	private Vec3 getMiddleYPosition(CopperGolem body) {
+		return body.position().add(0.0, body.getBoundingBox().getYsize() / 2.0, 0.0);
 	}
 
 	private void moveToContainer(ServerLevel level, CopperGolem body, BlockPos containerPos) {
-		// Vanilla TransportItemsBetweenContainers paths to the container block itself
-		// and lets the pathfinder choose the adjacent walkable endpoint. Do the same
-		// here instead of inventing a point inside the container's collision shape.
-		var path = body.getNavigation().createPath(containerPos, 0);
-		if (path != null) {
-			body.getNavigation().moveTo(path, 1.0);
-		}
+		// Match vanilla Copper Golem transport: target the container block itself
+		// through the walk/look target memory. The pathfinder chooses the valid
+		// adjacent endpoint instead of us inventing a point on/inside the chest.
+		BehaviorUtils.setWalkAndLookTargetMemories(body, Vec3.atCenterOf(containerPos), 1.0F, 0);
 	}
 
 	private BlockPos findRequesterChest(ServerLevel level, CopperGolem body) {
