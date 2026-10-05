@@ -3,13 +3,12 @@
 	"id": "requestergolems",
 	"version": "${version}",
 	"name": "Requester Golems",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Extends vanilla Copper Golems with requester-based logistics.",
 	"authors": [
-		"Me!"
+		"Bismuth"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://github.com/B1smu7h/requester-golems"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/requestergolems/icon.png",
@@ -20,9 +19,6 @@
 		],
 		"client": [
 			"com.bismuth.requestergolems.client.RequesterGolemsClient"
-		],
-		"fabric-datagen": [
-			"com.bismuth.requestergolems.client.RequesterGolemsDataGenerator"
 		]
 	},
 	"mixins": [
