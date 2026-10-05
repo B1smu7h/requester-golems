@@ -10,7 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.sounds.SoundEvents;
 
@@ -72,7 +72,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	}
 
 	@Override
-	protected void extractSlot(GuiGraphicsExtractor graphics, net.minecraft.world.inventory.Slot slot, int mouseX, int mouseY) {
+	protected void extractSlot(GuiGraphicsExtractor graphics, Slot slot, int mouseX, int mouseY) {
 		if (slot.index >= RequesterChestMenu.ACTIVE_REQUEST_SLOT_START
 				&& slot.index < RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + RequesterChestMenu.ACTIVE_REQUEST_SLOT_COUNT) {
 			return;
@@ -82,39 +82,56 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-		graphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth, this.topPos + this.imageHeight, 0xFFC6C6C6);
-
 		if (this.settingsMode) {
+			graphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth, this.topPos + this.imageHeight, 0xFFC6C6C6);
 			this.extractSettingsBackground(graphics, mouseX, mouseY);
 			return;
 		}
 
-		// Header.
-		graphics.fill(this.leftPos + 4, this.topPos + 4, this.leftPos + this.imageWidth - 4, this.topPos + 22, 0xFF8B8B8B);
+		// Compose the requester UI from the actual vanilla chest texture instead
+		// of hand-drawing slot borders. The storage and player-inventory sections
+		// now use the same artwork as a normal chest screen.
+		graphics.blit(
+				RenderPipelines.GUI_TEXTURED,
+				CONTAINER_TEXTURE,
+				this.leftPos,
+				this.topPos,
+				0,
+				0,
+				this.imageWidth,
+				71,
+				176,
+				222
+		);
 
-		// Physical requester chest inventory.
-		graphics.fill(this.leftPos + 4, this.topPos + 22, this.leftPos + this.imageWidth - 4, this.topPos + 80, 0xFF8B8B8B);
-		for (int row = 0; row < 3; row++) {
-			for (int column = 0; column < 9; column++) {
-				drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 24 + row * 18);
-			}
-		}
+		// The request row uses the vanilla first inventory-row texture slice.
+		// Its slot positions line up with our request slots at y=94.
+		graphics.blit(
+				RenderPipelines.GUI_TEXTURED,
+				CONTAINER_TEXTURE,
+				this.leftPos,
+				this.topPos + 94,
+				0,
+				17,
+				this.imageWidth,
+				18,
+				176,
+				222
+		);
 
-		// Request row.
-		graphics.fill(this.leftPos + 4, this.topPos + 82, this.leftPos + this.imageWidth - 4, this.topPos + 114, 0xFF8B8B8B);
-		for (int column = 0; column < 9; column++) {
-			drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 94);
-		}
-
-		// Player inventory.
-		for (int row = 0; row < 3; row++) {
-			for (int column = 0; column < 9; column++) {
-				drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 126 + row * 18);
-			}
-		}
-		for (int column = 0; column < 9; column++) {
-			drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 180);
-		}
+		// Vanilla player inventory section: texture y=126, rendered at screen y=114.
+		graphics.blit(
+				RenderPipelines.GUI_TEXTURED,
+				CONTAINER_TEXTURE,
+				this.leftPos,
+				this.topPos + 114,
+				0,
+				126,
+				this.imageWidth,
+				96,
+				176,
+				222
+		);
 	}
 
 	private void extractSettingsBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -164,11 +181,6 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 					0xFFC0C0C0
 			);
 		}
-	}
-
-	private void drawSlot(GuiGraphicsExtractor graphics, int x, int y) {
-		graphics.blit(RenderPipelines.GUI_TEXTURED, CONTAINER_TEXTURE,
-				x, y, 7.0F, 17.0F, 18, 18, 176, 222);
 	}
 
 	@Override
