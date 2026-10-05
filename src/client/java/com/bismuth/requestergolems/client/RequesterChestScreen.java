@@ -275,6 +275,10 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		com.bismuth.requestergolems.RequesterGolems.LOGGER.warn(
+				"CLIENT screen mouseClicked reached: mode={}, button={}, mouse=({}, {}), topLeft=({}, {})",
+				this.settingsMode, event.button(), event.x(), event.y(), this.leftPos, this.topPos
+		);
 		if (this.settingsMode) {
 			if (this.isInsideModeButton(event.x(), event.y())) {
 				return super.mouseClicked(event, doubleClick);
