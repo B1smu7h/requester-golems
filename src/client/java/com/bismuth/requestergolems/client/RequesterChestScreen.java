@@ -39,7 +39,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 		// Active jobs. Each row is a transaction with its current progress.
 		graphics.fill(this.leftPos + 4, this.topPos + 64, this.leftPos + this.imageWidth - 4, this.topPos + 176, 0xFF8B8B8B);
-		Component activeJobsLabel = Component.translatable("container.requestergolems.active_jobs");
+		Component activeRequestsLabel = Component.translatable("container.requestergolems.active_requests");
 		graphics.text(
 				this.font,
 				activeJobsLabel,
@@ -98,13 +98,14 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		for (int row = 0; row < 5; row++) {
 			for (int column = 0; column < 2; column++) {
 				int slot = column + row * 2;
-				ItemStack jobStack = this.menu.requestergolems$getActiveJobStack(slot);
-				if (jobStack.isEmpty()) continue;
+				ItemStack requestStack = this.menu.requestergolems$getActiveRequestStack(slot);
+				if (requestStack.isEmpty()) continue;
 
 				int x = column == 0 ? 8 : 96;
 				int y = 82 + row * 18;
-				int original = this.menu.requestergolems$getActiveJobOriginalCount(slot);
-				int delivered = original - jobStack.getCount();
+				int original = this.menu.requestergolems$getActiveRequestOriginalCount(slot);
+				int remaining = this.menu.requestergolems$getActiveRequestRemainingCount(slot);
+				int delivered = original - remaining;
 				String progress = delivered + "/" + original;
 
 				graphics.text(
