@@ -19,11 +19,11 @@ public class RequesterChestMenu extends AbstractContainerMenu {
 	public static final int PLAYER_SLOT_END = PLAYER_SLOT_START + Inventory.INVENTORY_SIZE;
 
 	private static final int REQUEST_X = 43;
-	private static final int REQUEST_Y = 18;
+	private static final int REQUEST_Y = 22;
 	private static final int CHEST_X = 8;
-	private static final int CHEST_Y = 66;
+	private static final int CHEST_Y = 80;
 	private static final int INVENTORY_X = 8;
-	private static final int INVENTORY_Y = 124;
+	private static final int INVENTORY_Y = 135;
 
 	private final Container requestContainer;
 	private final Container chestContainer;
