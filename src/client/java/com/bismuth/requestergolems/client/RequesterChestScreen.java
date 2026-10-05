@@ -274,12 +274,9 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 					int index = this.scrollOffset + visible;
 					if (index < this.menu.requestergolems$getActiveRequestCount()
 							&& this.minecraft.gameMode != null && this.minecraft.player != null) {
-						this.minecraft.gameMode.handleContainerInput(
+						this.minecraft.gameMode.handleInventoryButtonClick(
 								this.menu.containerId,
-								RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + index,
-								0,
-								ContainerInput.PICKUP,
-								this.minecraft.player
+								1000 + index
 						);
 						this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 1.0F, 1.0F);
 						return true;
