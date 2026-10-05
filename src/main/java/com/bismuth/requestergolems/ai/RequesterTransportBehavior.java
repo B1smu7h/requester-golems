@@ -112,6 +112,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 			if (this.interactionPhase == InteractionPhase.NONE) {
 				this.interactionPhase = InteractionPhase.PICKING_UP;
+				body.getNavigation().stop();
 				this.interactionTicks = TARGET_INTERACTION_TICKS;
 				body.setState(CopperGolemState.GETTING_ITEM);
 				body.setOpenedChestPos(this.sourceChestPos);
@@ -173,6 +174,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 		if (this.interactionPhase == InteractionPhase.NONE) {
 			this.interactionPhase = InteractionPhase.DROPPING_OFF;
+			body.getNavigation().stop();
 			this.interactionTicks = TARGET_INTERACTION_TICKS;
 			body.setState(CopperGolemState.DROPPING_ITEM);
 			body.setOpenedChestPos(this.requesterChestPos);
