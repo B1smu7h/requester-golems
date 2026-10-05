@@ -42,8 +42,8 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		Component activeRequestsLabel = Component.translatable("container.requestergolems.active_requests");
 		graphics.text(
 				this.font,
-				activeJobsLabel,
-				this.leftPos + (this.imageWidth - this.font.width(activeJobsLabel)) / 2,
+				activeRequestsLabel,
+				this.leftPos + (this.imageWidth - this.font.width(activeRequestsLabel)) / 2,
 				this.topPos + 66,
 				0xFF404040,
 				false
