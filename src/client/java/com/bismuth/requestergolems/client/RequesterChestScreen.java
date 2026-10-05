@@ -60,7 +60,6 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	private void setSettingsMode(boolean settings) {
 		this.settingsMode = settings;
 		this.scrollOffset = 0;
-		this.menu.requestergolems$setSettingsView(settings);
 		this.rebuildWidgets();
 	}
 
@@ -210,19 +209,21 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 	@Override
 	protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-		if (this.settingsMode && this.isInsideSettingsList(mouseX, mouseY)) {
-			int visible = (int)((mouseY - (this.topPos + SETTINGS_LIST_TOP)) / SETTINGS_ROW_HEIGHT);
-			int index = this.scrollOffset + visible;
-			if (visible >= 0 && visible < SETTINGS_VISIBLE_ROWS
-					&& index < this.menu.requestergolems$getActiveRequestCount()
-					&& !this.menu.requestergolems$getActiveRequestStack(index).isEmpty()) {
-				graphics.setTooltipForNextFrame(
-						Component.translatable("container.requestergolems.cancel_request"),
-						mouseX,
-						mouseY
-				);
-				return;
+		if (this.settingsMode) {
+			if (this.isInsideSettingsList(mouseX, mouseY)) {
+				int visible = (int)((mouseY - (this.topPos + SETTINGS_LIST_TOP)) / SETTINGS_ROW_HEIGHT);
+				int index = this.scrollOffset + visible;
+				if (visible >= 0 && visible < SETTINGS_VISIBLE_ROWS
+						&& index < this.menu.requestergolems$getActiveRequestCount()
+						&& !this.menu.requestergolems$getActiveRequestStack(index).isEmpty()) {
+					graphics.setTooltipForNextFrame(
+							Component.translatable("container.requestergolems.cancel_request"),
+							mouseX,
+							mouseY
+					);
+				}
 			}
+			return;
 		}
 		super.extractTooltip(graphics, mouseX, mouseY);
 	}
