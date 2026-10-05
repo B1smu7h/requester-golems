@@ -7,6 +7,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import java.util.ArrayList;
+import java.util.List;
 import com.bismuth.requestergolems.menu.RequesterChestMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,8 +29,12 @@ import net.minecraft.core.NonNullList;
 public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	private static final String REQUESTER_KEY = "requestergolems:requester";
 	private static final String REQUEST_KEY_PREFIX = "requestergolems:request_";
+	private static final String ACTIVE_JOBS_KEY = "requestergolems:active_jobs";
+	private static final String REDSTONE_KEY = "requestergolems:redstone_powered";
 
 	private boolean requestergolems$requester;
+	private boolean requestergolems$redstonePowered;
+	private final List<ItemStack> requestergolems$activeJobs = new ArrayList<>();
 	private final NonNullList<ItemStack> requestergolems$requests =
 			NonNullList.withSize(RequesterChestAccess.REQUEST_SLOT_COUNT, ItemStack.EMPTY);
 
@@ -40,6 +46,53 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	@Override
 	public void requestergolems$setRequester(boolean requester) {
 		this.requestergolems$requester = requester;
+	}
+
+	@Override
+	public boolean requestergolems$isRedstonePowered() {
+		return this.requestergolems$redstonePowered;
+	}
+
+	@Override
+	public void requestergolems$setRedstonePowered(boolean powered) {
+		this.requestergolems$redstonePowered = powered;
+		((ChestBlockEntity) (Object) this).setChanged();
+	}
+
+	@Override
+	public void requestergolems$activateRequests() {
+		if (!this.requestergolems$requester) return;
+		for (ItemStack request : this.requestergolems$requests) {
+			if (request.isEmpty()) continue;
+			int remaining = request.getCount();
+			while (remaining > 0) {
+				int amount = Math.min(16, remaining);
+				this.requestergolems$activeJobs.add(request.copyWithCount(amount));
+				remaining -= amount;
+			}
+		}
+		((ChestBlockEntity) (Object) this).setChanged();
+	}
+
+	@Override
+	public boolean requestergolems$hasActiveJobs() {
+		return !this.requestergolems$activeJobs.isEmpty();
+	}
+
+	@Override
+	public ItemStack requestergolems$claimJob() {
+		if (this.requestergolems$activeJobs.isEmpty()) return ItemStack.EMPTY;
+		ItemStack job = this.requestergolems$activeJobs.remove(0);
+		((ChestBlockEntity) (Object) this).setChanged();
+		return job;
+	}
+
+	@Override
+	public void requestergolems$returnJob(ItemStack job) {
+		if (!job.isEmpty()) {
+			this.requestergolems$activeJobs.add(0, job.copy());
+			((ChestBlockEntity) (Object) this).setChanged();
+		}
 	}
 
 	@Override
@@ -74,6 +127,9 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	@Inject(method = "saveAdditional", at = @At("TAIL"))
 	private void requestergolems$save(ValueOutput output, CallbackInfo ci) {
 		output.putBoolean(REQUESTER_KEY, this.requestergolems$requester);
+		output.putBoolean(REDSTONE_KEY, this.requestergolems$redstonePowered);
+		ValueOutput.TypedOutputList<ItemStack> jobs = output.list(ACTIVE_JOBS_KEY, ItemStack.CODEC);
+		for (ItemStack job : this.requestergolems$activeJobs) jobs.add(job);
 
 		for (int slot = 0; slot < RequesterChestAccess.REQUEST_SLOT_COUNT; slot++) {
 			ItemStack request = this.requestergolems$requests.get(slot);
@@ -86,6 +142,9 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	@Inject(method = "loadAdditional", at = @At("TAIL"))
 	private void requestergolems$load(ValueInput input, CallbackInfo ci) {
 		this.requestergolems$requester = input.getBooleanOr(REQUESTER_KEY, false);
+		this.requestergolems$redstonePowered = input.getBooleanOr(REDSTONE_KEY, false);
+		this.requestergolems$activeJobs.clear();
+		this.requestergolems$activeJobs.addAll(input.listOrEmpty(ACTIVE_JOBS_KEY, ItemStack.CODEC).stream().map(ItemStack::copy).toList());
 
 		for (int slot = 0; slot < RequesterChestAccess.REQUEST_SLOT_COUNT; slot++) {
 			this.requestergolems$requests.set(
