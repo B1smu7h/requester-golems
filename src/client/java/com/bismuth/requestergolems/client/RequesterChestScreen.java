@@ -3,6 +3,7 @@ package com.bismuth.requestergolems.client;
 import com.bismuth.requestergolems.menu.RequesterChestMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -88,9 +89,6 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			return;
 		}
 
-		graphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth,
-				this.topPos + this.imageHeight, 0xFFC6C6C6);
-
 		graphics.blit(
 				RenderPipelines.GUI_TEXTURED,
 				CONTAINER_TEXTURE,
@@ -100,6 +98,21 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				0,
 				this.imageWidth,
 				71,
+				256,
+				256
+		);
+
+		// Fill the inserted gap with the same vanilla chest texture rather than
+		// a flat color, preserving the panel's border/shadow artwork.
+		graphics.blit(
+				RenderPipelines.GUI_TEXTURED,
+				CONTAINER_TEXTURE,
+				this.leftPos,
+				this.topPos + 71,
+				0,
+				71,
+				this.imageWidth,
+				23,
 				256,
 				256
 		);
@@ -252,6 +265,35 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		return hours > 0
 				? String.format("%02d:%02d:%02d", hours, minutes, seconds)
 				: String.format("%02d:%02d", minutes, seconds);
+	}
+
+	@Override
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		if (this.settingsMode) {
+			if (this.isInsideModeButton(event.x(), event.y())) {
+				return super.mouseClicked(event, doubleClick);
+			}
+
+			if (event.button() == 0 && this.isInsideSettingsList(event.x(), event.y())) {
+				int visible = (int)((event.y() - (this.topPos + SETTINGS_LIST_TOP)) / SETTINGS_ROW_HEIGHT);
+				if (visible >= 0 && visible < SETTINGS_VISIBLE_ROWS) {
+					int index = this.scrollOffset + visible;
+					if (index < this.menu.requestergolems$getActiveRequestCount()
+							&& this.minecraft.gameMode != null && this.minecraft.player != null) {
+						this.minecraft.gameMode.handleContainerInput(
+								this.menu.containerId,
+								RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + index,
+								0,
+							net.minecraft.world.inventory.ContainerInput.PICKUP,
+								this.minecraft.player
+						);
+						return true;
+					}
+				}
+			}
+			return true;
+		}
+		return super.mouseClicked(event, doubleClick);
 	}
 
 	@Override
