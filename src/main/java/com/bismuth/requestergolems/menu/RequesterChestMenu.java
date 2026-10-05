@@ -1,7 +1,7 @@
 package com.bismuth.requestergolems.menu;
 
 import com.bismuth.requestergolems.RequesterChestAccess;
-import com.bismuth.requestergolems.RequesterJob;
+import com.bismuth.requestergolems.RequesterRequest;
 import java.util.List;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -19,19 +19,20 @@ public class RequesterChestMenu extends ChestMenu {
 	private static final int CHEST_SLOT_COUNT = 27;
 	private static final int PLAYER_SLOT_COUNT = Inventory.INVENTORY_SIZE;
 	private static final int REQUEST_SLOT_START = CHEST_SLOT_COUNT + PLAYER_SLOT_COUNT;
-	private static final int ACTIVE_JOB_SLOT_START = REQUEST_SLOT_START + REQUEST_SLOT_COUNT;
-	private static final int ACTIVE_JOB_SLOT_COUNT = 10;
+	private static final int ACTIVE_REQUEST_SLOT_START = REQUEST_SLOT_START + REQUEST_SLOT_COUNT;
+	private static final int ACTIVE_REQUEST_SLOT_COUNT = 10;
 
 	private static final int REQUEST_X = 43;
 	private static final int REQUEST_Y = 22;
-	private static final int ACTIVE_JOB_LEFT_X = 8;
-	private static final int ACTIVE_JOB_RIGHT_X = 96;
-	private static final int ACTIVE_JOB_Y = 82;
+	private static final int ACTIVE_REQUEST_LEFT_X = 8;
+	private static final int ACTIVE_REQUEST_RIGHT_X = 96;
+	private static final int ACTIVE_REQUEST_Y = 82;
 
 	private final Container requestContainer;
-	private final SimpleContainer activeJobContainer;
+	private final SimpleContainer activeRequestContainer;
 	private final ChestBlockEntity requesterChest;
-	private final int[] activeJobOriginalCounts = new int[ACTIVE_JOB_SLOT_COUNT];
+	private final int[] activeRequestOriginalCounts = new int[ACTIVE_REQUEST_SLOT_COUNT];
+	private final int[] activeRequestRemainingCounts = new int[ACTIVE_REQUEST_SLOT_COUNT];
 
 	public RequesterChestMenu(int containerId, Inventory inventory) {
 		this(containerId, inventory, null, new SimpleContainer(CHEST_SLOT_COUNT), new SimpleContainer(REQUEST_SLOT_COUNT));
@@ -51,9 +52,10 @@ public class RequesterChestMenu extends ChestMenu {
 		super(ModMenuTypes.REQUESTER_CHEST, containerId, inventory, chestContainer, 3);
 		this.requestContainer = requestContainer;
 		this.requesterChest = chest;
-		this.activeJobContainer = new SimpleContainer(ACTIVE_JOB_SLOT_COUNT);
-		for (int slot = 0; slot < ACTIVE_JOB_SLOT_COUNT; slot++) {
-			this.addDataSlot(DataSlot.shared(this.activeJobOriginalCounts, slot));
+		this.activeRequestContainer = new SimpleContainer(ACTIVE_REQUEST_SLOT_COUNT);
+		for (int slot = 0; slot < ACTIVE_REQUEST_SLOT_COUNT; slot++) {
+			this.addDataSlot(DataSlot.shared(this.activeRequestOriginalCounts, slot));
+			this.addDataSlot(DataSlot.shared(this.activeRequestRemainingCounts, slot));
 		}
 
 		// ChestMenu gives us the vanilla chest lifecycle and slot semantics.
@@ -107,37 +109,40 @@ public class RequesterChestMenu extends ChestMenu {
 		for (int row = 0; row < 5; row++) {
 			for (int column = 0; column < 2; column++) {
 				int slot = column + row * 2;
-				int x = column == 0 ? ACTIVE_JOB_LEFT_X : ACTIVE_JOB_RIGHT_X;
-				addSlot(new Slot(activeJobContainer, slot, x, ACTIVE_JOB_Y + row * 18));
+				int x = column == 0 ? ACTIVE_REQUEST_LEFT_X : ACTIVE_REQUEST_RIGHT_X;
+				addSlot(new Slot(activeRequestContainer, slot, x, ACTIVE_REQUEST_Y + row * 18));
 			}
 		}
 	}
 
 	@Override
 	public void broadcastChanges() {
-		this.requestergolems$syncActiveJobs();
+		this.requestergolems$syncActiveRequests();
 		super.broadcastChanges();
 	}
 
-	public ItemStack requestergolems$getActiveJobStack(int slot) {
-		if (slot < 0 || slot >= ACTIVE_JOB_SLOT_COUNT) return ItemStack.EMPTY;
-		return this.activeJobContainer.getItem(slot);
+	public ItemStack requestergolems$getActiveRequestStack(int slot) {
+		if (slot < 0 || slot >= ACTIVE_REQUEST_SLOT_COUNT) return ItemStack.EMPTY;
+		return this.activeRequestContainer.getItem(slot);
 	}
 
-	public int requestergolems$getActiveJobOriginalCount(int slot) {
+	public int requestergolems$getActiveRequestOriginalCount(int slot) {
 		if (slot < 0 || slot >= ACTIVE_JOB_SLOT_COUNT) return 0;
-		return this.activeJobOriginalCounts[slot];
+		return this.activeRequestOriginalCounts[slot];
 	}
 
-	private void requestergolems$syncActiveJobs() {
-		List<RequesterJob> jobs = this.requesterChest instanceof RequesterChestAccess access
-				? access.requestergolems$getActiveJobs()
+	private void requestergolems$syncActiveRequests() {
+		List<RequesterRequest> requests = this.requesterChest instanceof RequesterChestAccess access
+				? access.requestergolems$getActiveRequests()
 				: List.of();
 
-		for (int slot = 0; slot < ACTIVE_JOB_SLOT_COUNT; slot++) {
-			this.activeJobOriginalCounts[slot] = slot < jobs.size() ? jobs.get(slot).originalCount() : 0;
-			ItemStack desired = slot < jobs.size() ? jobs.get(slot).stack().copy() : ItemStack.EMPTY;
-			ItemStack current = this.activeJobContainer.getItem(slot);
+		for (int slot = 0; slot < ACTIVE_REQUEST_SLOT_COUNT; slot++) {
+			this.activeRequestOriginalCounts[slot] = slot < requests.size() ? requests.get(slot).originalCount() : 0;
+			this.activeRequestRemainingCounts[slot] = slot < requests.size() ? requests.get(slot).remainingCount() : 0;
+			ItemStack desired = slot < requests.size()
+					? requests.get(slot).requestedItem().copyWithCount(1)
+					: ItemStack.EMPTY;
+			ItemStack current = this.activeRequestContainer.getItem(slot);
 			if (!current.equals(desired)) {
 				this.activeJobContainer.setItem(slot, desired);
 			}
@@ -146,10 +151,10 @@ public class RequesterChestMenu extends ChestMenu {
 
 	@Override
 	public void clicked(int slotIndex, int buttonNum, ContainerInput input, Player player) {
-		if (slotIndex >= ACTIVE_JOB_SLOT_START
-				&& slotIndex < ACTIVE_JOB_SLOT_START + ACTIVE_JOB_SLOT_COUNT) {
+		if (slotIndex >= ACTIVE_REQUEST_SLOT_START
+				&& slotIndex < ACTIVE_REQUEST_SLOT_START + ACTIVE_REQUEST_SLOT_COUNT) {
 			if (input == ContainerInput.PICKUP && buttonNum == 0 && getCarried().isEmpty()) {
-				this.requestergolems$cancelActiveJob(slotIndex - ACTIVE_JOB_SLOT_START);
+				this.requestergolems$cancelActiveRequest(slotIndex - ACTIVE_REQUEST_SLOT_START);
 			}
 			return;
 		}
@@ -173,12 +178,12 @@ public class RequesterChestMenu extends ChestMenu {
 		super.clicked(slotIndex, buttonNum, input, player);
 	}
 
-	private void requestergolems$cancelActiveJob(int jobIndex) {
+	private void requestergolems$cancelActiveRequest(int requestIndex) {
 		if (!(this.requesterChest instanceof RequesterChestAccess access)) return;
 
-		List<RequesterJob> jobs = access.requestergolems$getActiveJobs();
-		if (jobIndex >= 0 && jobIndex < jobs.size()) {
-			access.requestergolems$cancelJob(jobs.get(jobIndex).id());
+		List<RequesterRequest> requests = access.requestergolems$getActiveRequests();
+		if (requestIndex >= 0 && requestIndex < requests.size()) {
+			access.requestergolems$cancelRequest(requests.get(requestIndex).id());
 			broadcastChanges();
 		}
 	}
