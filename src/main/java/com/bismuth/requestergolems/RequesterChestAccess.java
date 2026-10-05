@@ -16,6 +16,10 @@ public interface RequesterChestAccess {
 
 	void requestergolems$setRedstonePowered(boolean powered);
 
+	void requestergolems$emitCompletionPulse();
+
+	boolean requestergolems$isCompletionPulseActive();
+
 	void requestergolems$activateRequests();
 
 	boolean requestergolems$hasActiveJobs();
