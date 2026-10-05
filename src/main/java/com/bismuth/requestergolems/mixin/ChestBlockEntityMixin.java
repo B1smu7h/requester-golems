@@ -77,6 +77,10 @@ private boolean requestergolems$completionPulse;
 	@Override
 	public void requestergolems$emitCompletionPulse() {
 		if (!this.requestergolems$requester) return;
+
+		// Treat our own output as a temporary powered state so the signal
+		// returning through redstone cannot look like a fresh rising edge.
+		this.requestergolems$redstonePowered = true;
 		this.requestergolems$completionPulse = true;
 		ChestBlockEntity chest = (ChestBlockEntity) (Object) this;
 		if (chest.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
