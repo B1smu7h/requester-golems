@@ -5,18 +5,16 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.sounds.SoundEvents;
 
 public class RequesterChestScreen extends AbstractContainerScreen<RequesterChestMenu> {
 	private static final Identifier CONTAINER_TEXTURE = Identifier.withDefaultNamespace("textures/gui/container/generic_54.png");
-	private static final int MAIN_HEIGHT = 208;
+	private static final int MAIN_HEIGHT = 209;
 	private static final int SETTINGS_LIST_TOP = 28;
 	private static final int SETTINGS_LIST_BOTTOM = 92;
 	private static final int SETTINGS_ROW_HEIGHT = 20;
@@ -61,24 +59,27 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		this.settingsMode = settings;
 		this.scrollOffset = 0;
 		this.menu.requestergolems$setSettingsView(settings);
+		this.menu.requestergolems$setActiveRequestView(0);
 		this.rebuildWidgets();
 	}
 
 
-	@Override
-	protected void extractSlots(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-		if (this.settingsMode) return;
-		super.extractSlots(graphics, mouseX, mouseY);
-	}
+\t@Override
+\tprotected void extractSlots(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+\t\tsuper.extractSlots(graphics, mouseX, mouseY);
+\t}
 
-	@Override
-	protected void extractSlot(GuiGraphicsExtractor graphics, Slot slot, int mouseX, int mouseY) {
-		if (slot.index >= RequesterChestMenu.ACTIVE_REQUEST_SLOT_START
-				&& slot.index < RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + RequesterChestMenu.ACTIVE_REQUEST_SLOT_COUNT) {
-			return;
-		}
-		super.extractSlot(graphics, slot, mouseX, mouseY);
-	}
+\t@Override
+\tprotected void extractSlot(GuiGraphicsExtractor graphics, Slot slot, int mouseX, int mouseY) {
+\t\tboolean activeRequestSlot = slot.index >= RequesterChestMenu.ACTIVE_REQUEST_SLOT_START
+\t\t\t\t&& slot.index < RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + RequesterChestMenu.ACTIVE_REQUEST_SLOT_COUNT;
+
+\t\tif (this.settingsMode != activeRequestSlot) {
+\t\t\treturn;
+\t\t}
+
+\t\tsuper.extractSlot(graphics, slot, mouseX, mouseY);
+\t}
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
@@ -88,53 +89,48 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			return;
 		}
 
-		// Compose the requester UI from the actual vanilla chest texture instead
-		// of hand-drawing slot borders. The storage and player-inventory sections
-		// now use the same artwork as a normal chest screen.
-		graphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth,
-				this.topPos + this.imageHeight, 0xFFC6C6C6);
+\t\tgraphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth,
+\t\t\t\tthis.topPos + this.imageHeight, 0xFFC6C6C6);
 
-		graphics.blit(
-				RenderPipelines.GUI_TEXTURED,
-				CONTAINER_TEXTURE,
-				this.leftPos,
-				this.topPos + 6,
-				0,
-				0,
-				this.imageWidth,
-				71,
-				176,
-				222
-		);
+\t\tgraphics.blit(
+\t\t\t\tRenderPipelines.GUI_TEXTURED,
+\t\t\t\tCONTAINER_TEXTURE,
+\t\t\t\tthis.leftPos,
+\t\t\t\tthis.topPos,
+\t\t\t\t0,
+\t\t\t\t0,
+\t\t\t\tthis.imageWidth,
+\t\t\t\t71,
+\t\t\t\t256,
+\t\t\t\t256
+\t\t);
 
-		// The request row uses the vanilla first inventory-row texture slice.
-		// Its slot positions line up with our request slots at y=94.
-		graphics.blit(
-				RenderPipelines.GUI_TEXTURED,
-				CONTAINER_TEXTURE,
-				this.leftPos,
-				this.topPos + 94,
-				0,
-				17,
-				this.imageWidth,
-				18,
-				176,
-				222
-		);
+\t\tgraphics.blit(
+\t\t\t\tRenderPipelines.GUI_TEXTURED,
+\t\t\t\tCONTAINER_TEXTURE,
+\t\t\t\tthis.leftPos,
+\t\t\t\tthis.topPos + 94,
+\t\t\t\t0,
+\t\t\t\t17,
+\t\t\t\tthis.imageWidth,
+\t\t\t\t18,
+\t\t\t\t256,
+\t\t\t\t256
+\t\t);
 
-		// Vanilla player inventory section: texture y=126, rendered at screen y=114.
-		graphics.blit(
-				RenderPipelines.GUI_TEXTURED,
-				CONTAINER_TEXTURE,
-				this.leftPos,
-				this.topPos + 120,
-				0,
-				83,
-				this.imageWidth,
-				84,
-				176,
-				222
-		);
+\t\tgraphics.blit(
+\t\t\t\tRenderPipelines.GUI_TEXTURED,
+\t\t\t\tCONTAINER_TEXTURE,
+\t\t\t\tthis.leftPos,
+\t\t\t\tthis.topPos + 113,
+\t\t\t\t0,
+\t\t\t\t126,
+\t\t\t\tthis.imageWidth,
+\t\t\t\t96,
+\t\t\t\t256,
+\t\t\t\t256
+\t\t);
+
 	}
 
 	private void extractSettingsBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -202,10 +198,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				if (stack.isEmpty()) continue;
 
 				int y = SETTINGS_LIST_TOP + visible * SETTINGS_ROW_HEIGHT + 2;
-				graphics.item(stack, 9, y);
-				graphics.itemDecorations(this.font, stack, 9, y);
-
-				String name = stack.getHoverName().getString();
+								String name = stack.getHoverName().getString();
 				if (name.length() > 18) name = name.substring(0, 17) + "…";
 				graphics.text(this.font, Component.literal(name),
 						30, y + 3, 0xFF404040, false);
@@ -263,38 +256,6 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		if (this.settingsMode) {
-			// The settings page is a custom view over the same menu. Keep the
-			// underlying inventory slots completely inert while it is open.
-			if (this.isInsideModeButton(event.x(), event.y())) {
-				return super.mouseClicked(event, doubleClick);
-			}
-
-			if (event.button() == 0 && this.isInsideSettingsList(event.x(), event.y())) {
-				int visible = (int)((event.y() - (this.topPos + SETTINGS_LIST_TOP)) / SETTINGS_ROW_HEIGHT);
-				if (visible >= 0 && visible < SETTINGS_VISIBLE_ROWS) {
-					int index = this.scrollOffset + visible;
-					if (index < this.menu.requestergolems$getActiveRequestCount()
-							&& this.minecraft.gameMode != null && this.minecraft.player != null) {
-						this.minecraft.gameMode.handleContainerInput(
-								this.menu.containerId,
-								RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + index,
-								0,
-							net.minecraft.world.inventory.ContainerInput.PICKUP,
-								this.minecraft.player
-						);
-						this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 1.0F, 1.0F);
-						return true;
-					}
-				}
-			}
-			return true;
-		}
-		return super.mouseClicked(event, doubleClick);
-	}
-
-	@Override
 	public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
 		if (this.settingsMode && this.isInsideSettingsList(x, y)) {
 			int count = this.menu.requestergolems$getActiveRequestCount();
@@ -305,6 +266,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 						0,
 						maxScroll
 				);
+				this.menu.requestergolems$setActiveRequestView(this.scrollOffset);
 				return true;
 			}
 		}
