@@ -113,7 +113,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 			Container source = getContainer(level, this.sourceChestPos, false);
 			if (source == null) {
-				this.failAndRetry(level);
+				this.failAndRetry(level, body);
 				return;
 			}
 
@@ -136,7 +136,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 					body.clearOpenedChestPos();
 					body.setState(CopperGolemState.GETTING_NO_ITEM);
 					this.interactionPhase = InteractionPhase.NONE;
-					this.failAndRetry(level);
+					this.failAndRetry(level, body);
 					return;
 				}
 
@@ -147,7 +147,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				this.interactionPhase = InteractionPhase.NONE;
 				if (picked.isEmpty()) {
 					body.setState(CopperGolemState.GETTING_NO_ITEM);
-					this.failAndRetry(level);
+					this.failAndRetry(level, body);
 					return;
 				}
 
@@ -202,7 +202,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			// normal storage instead of hammering a full/blocked requester chest.
 			body.setItemSlot(EquipmentSlot.MAINHAND, carried);
 			this.carrying = true;
-			this.failAndRetry(level);
+			this.failAndRetry(level, body);
 			return;
 		}
 
@@ -216,7 +216,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		} else if (!this.carrying) {
 			// Partial source fulfillment: put the remaining quantity back
 			// into the requester chest job queue.
-			this.failAndRetry(level);
+			this.failAndRetry(level, body);
 		}
 	}
 
