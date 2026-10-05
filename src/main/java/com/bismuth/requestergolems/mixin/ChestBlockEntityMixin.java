@@ -151,7 +151,11 @@ private boolean requestergolems$completionPulse;
 	) {
 		if (!this.requestergolems$completionPulse) return;
 		this.requestergolems$completionPulse = false;
-		((ChestBlockEntity) (Object) this).setChanged();
+		ChestBlockEntity chest = (ChestBlockEntity) (Object) this;
+		if (chest.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
+			level.updateNeighborsAt(chest.getBlockPos(), level.getBlockState(chest.getBlockPos()).getBlock());
+		}
+		chest.setChanged();
 	}
 
 	@Inject(method = "createMenu", at = @At("HEAD"), cancellable = true)
