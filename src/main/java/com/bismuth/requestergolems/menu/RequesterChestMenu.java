@@ -39,6 +39,44 @@ public class RequesterChestMenu extends ChestMenu {
 		super(ModMenuTypes.REQUESTER_CHEST, containerId, inventory, chestContainer, 3);
 		this.requestContainer = requestContainer;
 
+		// ChestMenu gives us the vanilla chest lifecycle and slot semantics.
+		// Reposition its existing slots for the taller requester layout without
+		// changing their slot indices or containers.
+		for (int row = 0; row < 3; row++) {
+			for (int column = 0; column < 9; column++) {
+				int slot = column + row * 9;
+				this.slots.set(slot, new Slot(
+						this.getContainer(),
+						slot,
+						8 + column * 18,
+						80 + row * 18
+				));
+			}
+		}
+
+		for (int row = 0; row < 3; row++) {
+			for (int column = 0; column < 9; column++) {
+				int slot = 27 + column + row * 9;
+				int inventorySlot = 9 + column + row * 9;
+				this.slots.set(slot, new Slot(
+						inventory,
+						inventorySlot,
+						8 + column * 18,
+						135 + row * 18
+				));
+			}
+		}
+
+		for (int column = 0; column < 9; column++) {
+			int slot = 54 + column;
+			this.slots.set(slot, new Slot(
+					inventory,
+					column,
+					8 + column * 18,
+					193
+			));
+		}
+
 		for (int row = 0; row < 2; row++) {
 			for (int column = 0; column < 5; column++) {
 				int slot = column + row * 5;
