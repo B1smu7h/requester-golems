@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 
 public class RequesterChestMenu extends ChestMenu {
 	public static final int REQUEST_SLOT_COUNT = RequesterChestAccess.REQUEST_SLOT_COUNT;
-	public static final int ACTIVE_REQUEST_SLOT_START = 63;
+	public static final int ACTIVE_REQUEST_SLOT_START = 72;
 	public static final int ACTIVE_REQUEST_SLOT_COUNT = 64;
 
 	private static final int CHEST_SLOT_COUNT = 27;
