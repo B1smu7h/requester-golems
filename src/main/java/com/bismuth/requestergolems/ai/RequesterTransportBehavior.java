@@ -208,9 +208,9 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		this.job.shrink(delivered);
 		if (this.job.isEmpty()) {
 			BlockEntity destinationEntity = level.getBlockEntity(this.requesterChestPos);
-			if (destinationEntity instanceof RequesterChestAccess destination
-					&& !destination.requestergolems$hasActiveJobs()) {
-				destination.requestergolems$emitCompletionPulse();
+			if (destinationEntity instanceof RequesterChestAccess requesterAccess
+					&& !requesterAccess.requestergolems$hasActiveJobs()) {
+				requesterAccess.requestergolems$emitCompletionPulse();
 			}
 		}
 		body.setItemSlot(EquipmentSlot.MAINHAND, remainder);
