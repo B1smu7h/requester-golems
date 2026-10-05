@@ -18,11 +18,17 @@ public final class RequesterJob {
 
 	private final UUID id;
 	private final ItemStack stack;
+	private final int originalCount;
 	private State state;
 
 	public RequesterJob(UUID id, ItemStack stack, State state) {
+		this(id, stack, stack.getCount(), state);
+	}
+
+	public RequesterJob(UUID id, ItemStack stack, int originalCount, State state) {
 		this.id = id;
 		this.stack = stack.copy();
+		this.originalCount = Math.max(this.stack.getCount(), originalCount);
 		this.state = state;
 	}
 
@@ -38,6 +44,14 @@ public final class RequesterJob {
 		return this.stack;
 	}
 
+	public int originalCount() {
+		return this.originalCount;
+	}
+
+	public int deliveredCount() {
+		return this.originalCount - this.stack.getCount();
+	}
+
 	public State state() {
 		return this.state;
 	}
@@ -51,6 +65,6 @@ public final class RequesterJob {
 	}
 
 	public RequesterJob copy() {
-		return new RequesterJob(this.id, this.stack, this.state);
+		return new RequesterJob(this.id, this.stack, this.originalCount, this.state);
 	}
 }
