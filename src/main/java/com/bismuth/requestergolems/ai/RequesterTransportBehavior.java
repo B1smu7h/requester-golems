@@ -78,7 +78,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 	@Override
 	protected void tick(ServerLevel level, CopperGolem body, long timestamp) {
-		if (this.requesterChestPos == null || this.job.isEmpty()) return;
+		if (this.requesterChestPos == null || (this.job.isEmpty() && !this.carrying)) return;
 
 		if (!this.carrying) {
 			if (this.sourceChestPos == null) {
