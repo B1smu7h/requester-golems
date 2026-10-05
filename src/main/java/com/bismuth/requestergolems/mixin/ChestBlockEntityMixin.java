@@ -34,6 +34,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 
 	private boolean requestergolems$requester;
 	private boolean requestergolems$redstonePowered;
+private boolean requestergolems$completionPulse;
 	private List<ItemStack> requestergolems$activeJobs;
 	private NonNullList<ItemStack> requestergolems$requests;
 
@@ -71,6 +72,23 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	public void requestergolems$setRedstonePowered(boolean powered) {
 		this.requestergolems$redstonePowered = powered;
 		((ChestBlockEntity) (Object) this).setChanged();
+	}
+
+	@Override
+	public void requestergolems$emitCompletionPulse() {
+		if (!this.requestergolems$requester) return;
+		this.requestergolems$completionPulse = true;
+		ChestBlockEntity chest = (ChestBlockEntity) (Object) this;
+		if (chest.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
+			level.scheduleTick(chest.getBlockPos(), level.getBlockState(chest.getBlockPos()).getBlock(), 2);
+			level.updateNeighborsAt(chest.getBlockPos(), level.getBlockState(chest.getBlockPos()).getBlock());
+		}
+		chest.setChanged();
+	}
+
+	@Override
+	public boolean requestergolems$isCompletionPulseActive() {
+		return this.requestergolems$completionPulse;
 	}
 
 	@Override
@@ -127,6 +145,15 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 		((ChestBlockEntity) (Object) this).setChanged();
 	}
 
+	@Inject(method = "tick", at = @At("HEAD"))
+	private void requestergolems$tickCompletionPulse(
+			CallbackInfo ci
+	) {
+		if (!this.requestergolems$completionPulse) return;
+		this.requestergolems$completionPulse = false;
+		((ChestBlockEntity) (Object) this).setChanged();
+	}
+
 	@Inject(method = "createMenu", at = @At("HEAD"), cancellable = true)
 	private void requestergolems$createRequesterMenu(
 			int containerId,
@@ -142,6 +169,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	private void requestergolems$save(ValueOutput output, CallbackInfo ci) {
 		output.putBoolean(REQUESTER_KEY, this.requestergolems$requester);
 		output.putBoolean(REDSTONE_KEY, this.requestergolems$redstonePowered);
+		// Completion pulses are transient and intentionally are not persisted.
 		ValueOutput.TypedOutputList<ItemStack> jobs = output.list(ACTIVE_JOBS_KEY, ItemStack.CODEC);
 		for (ItemStack job : this.requestergolems$activeJobs()) jobs.add(job);
 
@@ -157,6 +185,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	private void requestergolems$load(ValueInput input, CallbackInfo ci) {
 		this.requestergolems$requester = input.getBooleanOr(REQUESTER_KEY, false);
 		this.requestergolems$redstonePowered = input.getBooleanOr(REDSTONE_KEY, false);
+		this.requestergolems$completionPulse = false;
 		this.requestergolems$activeJobs().clear();
 		this.requestergolems$activeJobs().addAll(input.listOrEmpty(ACTIVE_JOBS_KEY, ItemStack.CODEC).stream().map(ItemStack::copy).toList());
 
