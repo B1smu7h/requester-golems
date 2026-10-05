@@ -8,6 +8,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -29,6 +30,7 @@ public class RequesterChestMenu extends ChestMenu {
 	private final Container requestContainer;
 	private final SimpleContainer activeJobContainer;
 	private final ChestBlockEntity requesterChest;
+	private final int[] activeJobOriginalCounts = new int[ACTIVE_JOB_SLOT_COUNT];
 
 	public RequesterChestMenu(int containerId, Inventory inventory) {
 		this(containerId, inventory, null, new SimpleContainer(CHEST_SLOT_COUNT), new SimpleContainer(REQUEST_SLOT_COUNT));
@@ -49,6 +51,9 @@ public class RequesterChestMenu extends ChestMenu {
 		this.requestContainer = requestContainer;
 		this.requesterChest = chest;
 		this.activeJobContainer = new SimpleContainer(ACTIVE_JOB_SLOT_COUNT);
+		for (int slot = 0; slot < ACTIVE_JOB_SLOT_COUNT; slot++) {
+			this.addDataSlot(DataSlot.shared(this.activeJobOriginalCounts, slot));
+		}
 
 		// ChestMenu gives us the vanilla chest lifecycle and slot semantics.
 		// Reposition its existing slots for the taller requester layout without
@@ -115,12 +120,23 @@ public class RequesterChestMenu extends ChestMenu {
 		super.broadcastChanges();
 	}
 
+	public ItemStack requestergolems$getActiveJobStack(int slot) {
+		if (slot < 0 || slot >= ACTIVE_JOB_SLOT_COUNT) return ItemStack.EMPTY;
+		return this.activeJobContainer.getItem(slot);
+	}
+
+	public int requestergolems$getActiveJobOriginalCount(int slot) {
+		if (slot < 0 || slot >= ACTIVE_JOB_SLOT_COUNT) return 0;
+		return this.activeJobOriginalCounts[slot];
+	}
+
 	private void requestergolems$syncActiveJobs() {
 		List<RequesterJob> jobs = this.requesterChest instanceof RequesterChestAccess access
 				? access.requestergolems$getActiveJobs()
 				: List.of();
 
 		for (int slot = 0; slot < ACTIVE_JOB_SLOT_COUNT; slot++) {
+			this.activeJobOriginalCounts[slot] = slot < jobs.size() ? jobs.get(slot).originalCount() : 0;
 			ItemStack desired = slot < jobs.size() ? jobs.get(slot).stack().copy() : ItemStack.EMPTY;
 			ItemStack current = this.activeJobContainer.getItem(slot);
 			if (!current.equals(desired)) {
