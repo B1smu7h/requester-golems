@@ -107,11 +107,19 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		// The request row is inserted below the vanilla 3-row chest section.
 		// Do not sample rows 4-5 of generic_54 for the gap: those pixels contain
 		// more slot artwork, which is what caused the fake/void-looking region.
+		// Give the requester row its own small vanilla-style panel.
 		graphics.fill(
 				this.leftPos,
 				this.topPos + 71,
 				this.leftPos + this.imageWidth,
-				this.topPos + 94,
+				this.topPos + 114,
+				0xFF555555
+		);
+		graphics.fill(
+				this.leftPos + 1,
+				this.topPos + 72,
+				this.leftPos + this.imageWidth - 1,
+				this.topPos + 113,
 				0xFFC6C6C6
 		);
 
@@ -128,13 +136,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				256
 		);
 
-		graphics.fill(
-				this.leftPos,
-				this.topPos + 112,
-				this.leftPos + this.imageWidth,
-				this.topPos + 114,
-				0xFFC6C6C6
-		);
+
 
 		graphics.blit(
 				RenderPipelines.GUI_TEXTURED,
@@ -237,7 +239,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 		graphics.text(this.font, this.title, this.titleLabelX, this.titleLabelY, 0xFF404040, false);
 		graphics.text(this.font, Component.translatable("container.requestergolems.requests"),
-				8, 86, 0xFF404040, false);
+				8, 77, 0xFF404040, false);
 		graphics.text(this.font, this.playerInventoryTitle,
 				this.inventoryLabelX, this.inventoryLabelY, 0xFF404040, false);
 	}
