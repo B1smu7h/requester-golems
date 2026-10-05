@@ -95,7 +95,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 
 	@Override
 	public ItemStack requestergolems$claimJob() {
-		if (this.requestergolems$activeJobs.isEmpty()) return ItemStack.EMPTY;
+		if (this.requestergolems$activeJobs().isEmpty()) return ItemStack.EMPTY;
 		ItemStack job = this.requestergolems$activeJobs().remove(0);
 		((ChestBlockEntity) (Object) this).setChanged();
 		return job;
@@ -146,7 +146,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 		for (ItemStack job : this.requestergolems$activeJobs()) jobs.add(job);
 
 		for (int slot = 0; slot < RequesterChestAccess.REQUEST_SLOT_COUNT; slot++) {
-			ItemStack request = this.requestergolems$requests.get(slot);
+			ItemStack request = this.requestergolems$requests().get(slot);
 			if (!request.isEmpty()) {
 				output.store(REQUEST_KEY_PREFIX + slot, ItemStack.CODEC, request);
 			}
@@ -157,11 +157,11 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	private void requestergolems$load(ValueInput input, CallbackInfo ci) {
 		this.requestergolems$requester = input.getBooleanOr(REQUESTER_KEY, false);
 		this.requestergolems$redstonePowered = input.getBooleanOr(REDSTONE_KEY, false);
-		this.requestergolems$activeJobs.clear();
-		this.requestergolems$activeJobs.addAll(input.listOrEmpty(ACTIVE_JOBS_KEY, ItemStack.CODEC).stream().map(ItemStack::copy).toList());
+		this.requestergolems$activeJobs().clear();
+		this.requestergolems$activeJobs().addAll(input.listOrEmpty(ACTIVE_JOBS_KEY, ItemStack.CODEC).stream().map(ItemStack::copy).toList());
 
 		for (int slot = 0; slot < RequesterChestAccess.REQUEST_SLOT_COUNT; slot++) {
-			this.requestergolems$requests.set(
+			this.requestergolems$requests().set(
 					slot,
 					input.read(REQUEST_KEY_PREFIX + slot, ItemStack.CODEC).orElse(ItemStack.EMPTY)
 			);
