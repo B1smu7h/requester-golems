@@ -3,7 +3,9 @@
 	"package": "com.bismuth.requestergolems.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
-		"CopperGolemMixin"
+		"CopperGolemMixin",
+		"ChestBlockEntityMixin",
+		"ChestBlockMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
