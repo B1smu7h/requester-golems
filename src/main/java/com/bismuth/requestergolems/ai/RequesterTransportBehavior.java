@@ -184,7 +184,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	private BlockPos findRequesterChest(ServerLevel level, CopperGolem body) {
 		BlockPos best = null;
 		double bestDistance = Double.MAX_VALUE;
-		BlockPos center = this.requesterChestPos != null ? this.requesterChestPos : body.blockPosition();
+		BlockPos center = body.blockPosition();
 
 		for (BlockPos pos : BlockPos.betweenClosed(
 				center.offset(-REQUEST_RANGE_HORIZONTAL, -REQUEST_RANGE_VERTICAL, -REQUEST_RANGE_HORIZONTAL),
@@ -209,11 +209,11 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	private BlockPos findSourceChest(ServerLevel level, CopperGolem body, ItemStack requested) {
 		BlockPos best = null;
 		double bestDistance = Double.MAX_VALUE;
-		BlockPos center = body.blockPosition();
+		BlockPos center = this.requesterChestPos != null ? this.requesterChestPos : body.blockPosition();
 
 		for (BlockPos pos : BlockPos.betweenClosed(
-				center.offset(-SEARCH_HORIZONTAL, -SEARCH_VERTICAL, -SEARCH_HORIZONTAL),
-				center.offset(SEARCH_HORIZONTAL, SEARCH_VERTICAL, SEARCH_HORIZONTAL))) {
+				center.offset(-REQUEST_RANGE_HORIZONTAL, -REQUEST_RANGE_VERTICAL, -REQUEST_RANGE_HORIZONTAL),
+				center.offset(REQUEST_RANGE_HORIZONTAL, REQUEST_RANGE_VERTICAL, REQUEST_RANGE_HORIZONTAL))) {
 			BlockEntity entity = level.getBlockEntity(pos);
 			if (!(entity instanceof ChestBlockEntity)) continue;
 
