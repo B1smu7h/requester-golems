@@ -67,7 +67,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 			int remaining = request.getCount();
 			while (remaining > 0) {
 				int amount = Math.min(16, remaining);
-				this.requestergolems$activeJobs.add(request.copyWithCount(amount));
+				this.requestergolems$activeJobs().add(request.copyWithCount(amount));
 				remaining -= amount;
 			}
 		}
