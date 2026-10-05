@@ -23,7 +23,7 @@ public class RequesterChestMenu extends ChestMenu {
 	private static final int SETTINGS_VISIBLE_COUNT = 3;
 
 	private static final int REQUEST_X = 8;
-	private static final int REQUEST_Y = 94;
+	private static final int REQUEST_Y = 95;
 
 	private final Container requestContainer;
 	private final SimpleContainer activeRequestContainer;
