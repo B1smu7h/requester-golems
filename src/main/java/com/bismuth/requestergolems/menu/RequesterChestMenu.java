@@ -7,7 +7,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
-import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
@@ -30,23 +29,29 @@ public class RequesterChestMenu extends AbstractContainerMenu {
 	private final Container chestContainer;
 
 	public RequesterChestMenu(int containerId, Inventory inventory) {
-		this(containerId, inventory, new SimpleContainer(REQUEST_SLOT_COUNT), null);
+		this(containerId, inventory, new SimpleContainer(REQUEST_SLOT_COUNT), new SimpleContainer(27), null);
 	}
 
 	public RequesterChestMenu(int containerId, Inventory inventory, ChestBlockEntity chest) {
-		this(containerId, inventory, new RequestContainer(chest), chest);
+		this(containerId, inventory, new RequestContainer(chest), chest, chest);
 	}
 
 	private RequesterChestMenu(
 			int containerId,
 			Inventory inventory,
 			Container requestContainer,
+			Container chestContainer,
 			ChestBlockEntity chest
 	) {
 		super(ModMenuTypes.REQUESTER_CHEST, containerId);
 		checkContainerSize(requestContainer, REQUEST_SLOT_COUNT);
+		checkContainerSize(chestContainer, 27);
 		this.requestContainer = requestContainer;
-		this.chestContainer = chest;
+		this.chestContainer = chestContainer;
+
+		if (chest != null) {
+			chest.startOpen(inventory.player);
+		}
 
 		for (int row = 0; row < 2; row++) {
 			for (int column = 0; column < 5; column++) {
@@ -58,8 +63,7 @@ public class RequesterChestMenu extends AbstractContainerMenu {
 		for (int row = 0; row < 3; row++) {
 			for (int column = 0; column < 9; column++) {
 				int slot = column + row * 9;
-				addSlot(new Slot(chest == null ? new SimpleContainer(27) : chest, slot,
-						CHEST_X + column * 18, CHEST_Y + row * 18));
+				addSlot(new Slot(chestContainer, slot, CHEST_X + column * 18, CHEST_Y + row * 18));
 			}
 		}
 
@@ -124,15 +128,14 @@ public class RequesterChestMenu extends AbstractContainerMenu {
 
 	@Override
 	public boolean stillValid(Player player) {
-		return chestContainer == null || chestContainer.stillValid(player);
+		return chestContainer.stillValid(player);
 	}
 
 	@Override
 	public void removed(Player player) {
 		super.removed(player);
-		requestContainer.stopOpen(player);
-		if (chestContainer != null) {
-			chestContainer.stopOpen(player);
+		if (chestContainer instanceof ChestBlockEntity chest) {
+			chest.stopOpen(player);
 		}
 	}
 
@@ -157,12 +160,6 @@ public class RequesterChestMenu extends AbstractContainerMenu {
 			if (chest instanceof RequesterChestAccess access) {
 				access.requestergolems$setRequest(slot, stack);
 			}
-		}
-
-		@Override
-		public void startOpen(net.minecraft.world.entity.player.Player player) {
-			super.startOpen(player);
-			chest.startOpen(player);
 		}
 	}
 }
