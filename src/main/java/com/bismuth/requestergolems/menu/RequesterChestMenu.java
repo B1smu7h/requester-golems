@@ -20,6 +20,7 @@ public class RequesterChestMenu extends ChestMenu {
 	private static final int REQUEST_SLOT_START = CHEST_SLOT_COUNT + Inventory.INVENTORY_SIZE;
 	public static final int ACTIVE_REQUEST_SLOT_START = REQUEST_SLOT_START + REQUEST_SLOT_COUNT;
 	public static final int ACTIVE_REQUEST_SLOT_COUNT = 64;
+	private static final int SETTINGS_VISIBLE_COUNT = 3;
 
 	private static final int REQUEST_X = 8;
 	private static final int REQUEST_Y = 94;
@@ -110,7 +111,22 @@ public class RequesterChestMenu extends ChestMenu {
 		// active-request rows itself, so keep the backing slots off-screen while
 		// preserving their server-side slot IDs for cancellation clicks.
 		for (int slot = 0; slot < ACTIVE_REQUEST_SLOT_COUNT; slot++) {
-			addSlot(new Slot(activeRequestContainer, slot, -100, -100));
+			addSlot(new Slot(activeRequestContainer, slot, -1000, -1000));
+		}
+	}
+
+	public void requestergolems$setActiveRequestView(int firstIndex) {
+		int first = Math.max(0, Math.min(firstIndex, ACTIVE_REQUEST_SLOT_COUNT - SETTINGS_VISIBLE_COUNT));
+		for (int slot = 0; slot < ACTIVE_REQUEST_SLOT_COUNT; slot++) {
+			int visible = slot - first;
+			int x = visible >= 0 && visible < SETTINGS_VISIBLE_COUNT ? 8 : -1000;
+			int y = visible >= 0 && visible < SETTINGS_VISIBLE_COUNT
+					? 28 + visible * 20
+					: -1000;
+
+			Slot replacement = new Slot(this.activeRequestContainer, slot, x, y);
+			replacement.index = ACTIVE_REQUEST_SLOT_START + slot;
+			this.slots.set(ACTIVE_REQUEST_SLOT_START + slot, replacement);
 		}
 	}
 
@@ -167,6 +183,7 @@ public class RequesterChestMenu extends ChestMenu {
 			replacement.index = slot;
 			this.slots.set(slot, replacement);
 		}
+		this.requestergolems$setActiveRequestView(0);
 	}
 
 	@Override
