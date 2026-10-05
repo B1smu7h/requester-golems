@@ -66,7 +66,7 @@ public class RequesterChestMenu extends ChestMenu {
 						this.getContainer(),
 					slot,
 					8 + column * 18,
-					128 + row * 18
+					184 + row * 18
 				);
 				replacement.index = slot;
 				this.slots.set(slot, replacement);
