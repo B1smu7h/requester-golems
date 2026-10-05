@@ -257,7 +257,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		// Match vanilla Copper Golem transport: target the container block itself
 		// through the walk/look target memory. The pathfinder chooses the valid
 		// adjacent endpoint instead of us inventing a point on/inside the chest.
-		BehaviorUtils.setWalkAndLookTargetMemories(body, Vec3.atCenterOf(containerPos), 1.0F, 0);
+		BehaviorUtils.setWalkAndLookTargetMemories(body, containerPos, 1.0F, 0);
 	}
 
 	private BlockPos findRequesterChest(ServerLevel level, CopperGolem body) {
