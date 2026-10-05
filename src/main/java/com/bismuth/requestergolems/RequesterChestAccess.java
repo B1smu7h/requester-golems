@@ -20,6 +20,8 @@ public interface RequesterChestAccess {
 
 	boolean requestergolems$isCompletionPulseActive();
 
+	void requestergolems$clearCompletionPulse();
+
 	void requestergolems$activateRequests();
 
 	boolean requestergolems$hasActiveJobs();
