@@ -90,7 +90,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 	@Override
 	protected boolean canStillUse(ServerLevel level, CopperGolem body, long timestamp) {
-		return !this.job == null || this.carrying;
+		return this.job != null || this.carrying;
 	}
 
 	@Override
@@ -231,7 +231,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		body.setItemSlot(EquipmentSlot.MAINHAND, remainder);
 		this.carrying = !remainder.isEmpty();
 
-		if (this.job == null) {
+		if (this.job.isComplete()) {
 			if (!this.carrying) {
 				this.reset();
 			}
