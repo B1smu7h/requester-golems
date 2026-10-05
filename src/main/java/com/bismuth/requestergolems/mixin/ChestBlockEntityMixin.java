@@ -7,7 +7,6 @@ import com.bismuth.requestergolems.menu.RequesterChestMenu;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import com.bismuth.requestergolems.RequesterChestAccess;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
