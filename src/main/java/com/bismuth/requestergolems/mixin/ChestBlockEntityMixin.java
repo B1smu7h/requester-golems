@@ -34,9 +34,23 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 
 	private boolean requestergolems$requester;
 	private boolean requestergolems$redstonePowered;
-	private final List<ItemStack> requestergolems$activeJobs = new ArrayList<>();
-	private final NonNullList<ItemStack> requestergolems$requests =
-			NonNullList.withSize(RequesterChestAccess.REQUEST_SLOT_COUNT, ItemStack.EMPTY);
+	private List<ItemStack> requestergolems$activeJobs;
+	private NonNullList<ItemStack> requestergolems$requests;
+
+	private List<ItemStack> requestergolems$activeJobs() {
+		if (this.requestergolems$activeJobs == null) {
+			this.requestergolems$activeJobs = new ArrayList<>();
+		}
+		return this.requestergolems$activeJobs;
+	}
+
+	private NonNullList<ItemStack> requestergolems$requests() {
+		if (this.requestergolems$requests == null) {
+			this.requestergolems$requests =
+					NonNullList.withSize(RequesterChestAccess.REQUEST_SLOT_COUNT, ItemStack.EMPTY);
+		}
+		return this.requestergolems$requests;
+	}
 
 	@Override
 	public boolean requestergolems$isRequester() {
@@ -62,7 +76,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	@Override
 	public void requestergolems$activateRequests() {
 		if (!this.requestergolems$requester) return;
-		for (ItemStack request : this.requestergolems$requests) {
+		for (ItemStack request : this.requestergolems$requests()) {
 			if (request.isEmpty()) continue;
 			int remaining = request.getCount();
 			while (remaining > 0) {
@@ -76,13 +90,13 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 
 	@Override
 	public boolean requestergolems$hasActiveJobs() {
-		return !this.requestergolems$activeJobs.isEmpty();
+		return !this.requestergolems$activeJobs().isEmpty();
 	}
 
 	@Override
 	public ItemStack requestergolems$claimJob() {
 		if (this.requestergolems$activeJobs.isEmpty()) return ItemStack.EMPTY;
-		ItemStack job = this.requestergolems$activeJobs.remove(0);
+		ItemStack job = this.requestergolems$activeJobs().remove(0);
 		((ChestBlockEntity) (Object) this).setChanged();
 		return job;
 	}
@@ -90,7 +104,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	@Override
 	public void requestergolems$returnJob(ItemStack job) {
 		if (!job.isEmpty()) {
-			this.requestergolems$activeJobs.add(0, job.copy());
+			this.requestergolems$activeJobs().add(0, job.copy());
 			((ChestBlockEntity) (Object) this).setChanged();
 		}
 	}
@@ -100,7 +114,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 		if (slot < 0 || slot >= RequesterChestAccess.REQUEST_SLOT_COUNT) {
 			throw new IndexOutOfBoundsException("Invalid requester slot: " + slot);
 		}
-		return this.requestergolems$requests.get(slot);
+		return this.requestergolems$requests().get(slot);
 	}
 
 	@Override
@@ -109,7 +123,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 			throw new IndexOutOfBoundsException("Invalid requester slot: " + slot);
 		}
 
-		this.requestergolems$requests.set(slot, stack.copy());
+		this.requestergolems$requests().set(slot, stack.copy());
 		((ChestBlockEntity) (Object) this).setChanged();
 	}
 
@@ -129,7 +143,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 		output.putBoolean(REQUESTER_KEY, this.requestergolems$requester);
 		output.putBoolean(REDSTONE_KEY, this.requestergolems$redstonePowered);
 		ValueOutput.TypedOutputList<ItemStack> jobs = output.list(ACTIVE_JOBS_KEY, ItemStack.CODEC);
-		for (ItemStack job : this.requestergolems$activeJobs) jobs.add(job);
+		for (ItemStack job : this.requestergolems$activeJobs()) jobs.add(job);
 
 		for (int slot = 0; slot < RequesterChestAccess.REQUEST_SLOT_COUNT; slot++) {
 			ItemStack request = this.requestergolems$requests.get(slot);
