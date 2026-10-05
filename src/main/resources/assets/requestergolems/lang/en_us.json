@@ -1,5 +1,6 @@
 {
 	"container.requestergolems.requester_chest": "Requester Chest",
 	"container.requestergolems.requests": "Requests",
+	"container.requestergolems.active_jobs": "Active Jobs",
 	"container.requestergolems.storage": "Storage"
 }
