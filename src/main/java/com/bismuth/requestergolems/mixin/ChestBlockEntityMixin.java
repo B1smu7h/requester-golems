@@ -280,14 +280,15 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 
 		this.requestergolems$activeJobs().removeIf(job -> job.id().equals(jobId));
 
+		UUID completedRequestId = completed.requestId();
 		boolean requestCompleted = this.requestergolems$activeRequests().stream()
 				.anyMatch(request ->
-						request.id().equals(completed.requestId()) && request.isComplete()
-				);
+						request.id().equals(completedRequestId) && request.isComplete()
+			);
 
 		if (requestCompleted) {
 			this.requestergolems$activeRequests().removeIf(
-					request -> request.id().equals(completed.requestId())
+					request -> request.id().equals(completedRequestId)
 			);
 			if (!this.requestergolems$hasActiveRequests()) {
 				this.requestergolems$emitCompletionPulse();
