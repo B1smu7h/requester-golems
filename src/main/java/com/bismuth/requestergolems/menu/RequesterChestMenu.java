@@ -8,31 +8,28 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 
 public class RequesterChestMenu extends ChestMenu {
 	public static final int REQUEST_SLOT_COUNT = RequesterChestAccess.REQUEST_SLOT_COUNT;
-	private static final int CHEST_SLOT_COUNT = 27;
-	private static final int PLAYER_SLOT_COUNT = Inventory.INVENTORY_SIZE;
-	private static final int REQUEST_SLOT_START = CHEST_SLOT_COUNT + PLAYER_SLOT_COUNT;
-	private static final int ACTIVE_REQUEST_SLOT_START = REQUEST_SLOT_START + REQUEST_SLOT_COUNT;
-	private static final int ACTIVE_REQUEST_SLOT_COUNT = 10;
+	public static final int ACTIVE_REQUEST_SLOT_START = 63;
+	public static final int ACTIVE_REQUEST_SLOT_COUNT = 64;
 
-	private static final int REQUEST_X = 43;
-	private static final int REQUEST_Y = 22;
-	private static final int ACTIVE_REQUEST_LEFT_X = 8;
-	private static final int ACTIVE_REQUEST_RIGHT_X = 96;
-	private static final int ACTIVE_REQUEST_Y = 82;
+	private static final int CHEST_SLOT_COUNT = 27;
+	private static final int REQUEST_SLOT_START = CHEST_SLOT_COUNT + Inventory.INVENTORY_SIZE;
+	private static final int REQUEST_X = 8;
+	private static final int REQUEST_Y = 94;
 
 	private final Container requestContainer;
 	private final SimpleContainer activeRequestContainer;
 	private final ChestBlockEntity requesterChest;
 	private final int[] activeRequestOriginalCounts = new int[ACTIVE_REQUEST_SLOT_COUNT];
 	private final int[] activeRequestRemainingCounts = new int[ACTIVE_REQUEST_SLOT_COUNT];
+	private final int[] activeRequestElapsedTicks = new int[ACTIVE_REQUEST_SLOT_COUNT];
 
 	public RequesterChestMenu(int containerId, Inventory inventory) {
 		this(containerId, inventory, null, new SimpleContainer(CHEST_SLOT_COUNT), new SimpleContainer(REQUEST_SLOT_COUNT));
@@ -53,22 +50,23 @@ public class RequesterChestMenu extends ChestMenu {
 		this.requestContainer = requestContainer;
 		this.requesterChest = chest;
 		this.activeRequestContainer = new SimpleContainer(ACTIVE_REQUEST_SLOT_COUNT);
+
 		for (int slot = 0; slot < ACTIVE_REQUEST_SLOT_COUNT; slot++) {
 			this.addDataSlot(DataSlot.shared(this.activeRequestOriginalCounts, slot));
 			this.addDataSlot(DataSlot.shared(this.activeRequestRemainingCounts, slot));
+			this.addDataSlot(DataSlot.shared(this.activeRequestElapsedTicks, slot));
 		}
 
-		// ChestMenu gives us the vanilla chest lifecycle and slot semantics.
-		// Reposition its existing slots for the taller requester layout without
-		// changing their slot indices or containers.
+		// Keep the vanilla chest inventory semantics, but place the slots in the
+		// compact requester layout.
 		for (int row = 0; row < 3; row++) {
 			for (int column = 0; column < 9; column++) {
 				int slot = column + row * 9;
 				Slot replacement = new Slot(
 						this.getContainer(),
-					slot,
-					8 + column * 18,
-					184 + row * 18
+						slot,
+						8 + column * 18,
+						24 + row * 18
 				);
 				replacement.index = slot;
 				this.slots.set(slot, replacement);
@@ -81,9 +79,9 @@ public class RequesterChestMenu extends ChestMenu {
 				int inventorySlot = 9 + column + row * 9;
 				Slot replacement = new Slot(
 						inventory,
-					inventorySlot,
-					8 + column * 18,
-					257 + row * 18
+						inventorySlot,
+						8 + column * 18,
+						126 + row * 18
 				);
 				replacement.index = slot;
 				this.slots.set(slot, replacement);
@@ -93,10 +91,10 @@ public class RequesterChestMenu extends ChestMenu {
 		for (int column = 0; column < 9; column++) {
 			int slot = 54 + column;
 			Slot replacement = new Slot(
-					inventory,
-					column,
-					8 + column * 18,
-					311
+						inventory,
+						column,
+						8 + column * 18,
+						180
 			);
 			replacement.index = slot;
 			this.slots.set(slot, replacement);
@@ -106,12 +104,11 @@ public class RequesterChestMenu extends ChestMenu {
 			addSlot(new Slot(requestContainer, column, REQUEST_X + column * 18, REQUEST_Y));
 		}
 
-		for (int row = 0; row < 5; row++) {
-			for (int column = 0; column < 2; column++) {
-				int slot = column + row * 2;
-				int x = column == 0 ? ACTIVE_REQUEST_LEFT_X : ACTIVE_REQUEST_RIGHT_X;
-				addSlot(new Slot(activeRequestContainer, slot, x, ACTIVE_REQUEST_Y + row * 18));
-			}
+		// These slots are transport-only backing slots. The client renders the
+		// active-request rows itself, so keep the backing slots off-screen while
+		// preserving their server-side slot IDs for cancellation clicks.
+		for (int slot = 0; slot < ACTIVE_REQUEST_SLOT_COUNT; slot++) {
+			addSlot(new Slot(activeRequestContainer, slot, -100, -100));
 		}
 	}
 
@@ -119,6 +116,14 @@ public class RequesterChestMenu extends ChestMenu {
 	public void broadcastChanges() {
 		this.requestergolems$syncActiveRequests();
 		super.broadcastChanges();
+	}
+
+	public int requestergolems$getActiveRequestCount() {
+		int count = 0;
+		for (int slot = 0; slot < ACTIVE_REQUEST_SLOT_COUNT; slot++) {
+			if (this.activeRequestOriginalCounts[slot] > 0) count++;
+		}
+		return count;
 	}
 
 	public ItemStack requestergolems$getActiveRequestStack(int slot) {
@@ -136,20 +141,36 @@ public class RequesterChestMenu extends ChestMenu {
 		return this.activeRequestRemainingCounts[slot];
 	}
 
+	public int requestergolems$getActiveRequestElapsedTicks(int slot) {
+		if (slot < 0 || slot >= ACTIVE_REQUEST_SLOT_COUNT) return 0;
+		return this.activeRequestElapsedTicks[slot];
+	}
+
 	private void requestergolems$syncActiveRequests() {
 		List<RequesterRequest> requests = this.requesterChest instanceof RequesterChestAccess access
 				? access.requestergolems$getActiveRequests()
 				: List.of();
 
+		long gameTime = this.requesterChest != null && this.requesterChest.getLevel() != null
+				? this.requesterChest.getLevel().getGameTime()
+				: 0L;
+
 		for (int slot = 0; slot < ACTIVE_REQUEST_SLOT_COUNT; slot++) {
-			this.activeRequestOriginalCounts[slot] = slot < requests.size() ? requests.get(slot).originalCount() : 0;
-			this.activeRequestRemainingCounts[slot] = slot < requests.size() ? requests.get(slot).remainingCount() : 0;
-			ItemStack desired = slot < requests.size()
-					? requests.get(slot).requestedItem().copyWithCount(1)
-					: ItemStack.EMPTY;
-			ItemStack current = this.activeRequestContainer.getItem(slot);
-			if (!current.equals(desired)) {
-				this.activeRequestContainer.setItem(slot, desired);
+			if (slot < requests.size()) {
+				RequesterRequest request = requests.get(slot);
+				this.activeRequestOriginalCounts[slot] = request.originalCount();
+				this.activeRequestRemainingCounts[slot] = request.remainingCount();
+				long elapsed = Math.max(0L, gameTime - request.createdAt());
+				this.activeRequestElapsedTicks[slot] = (int) Math.min(Integer.MAX_VALUE, elapsed);
+				this.activeRequestContainer.setItem(
+						slot,
+						request.requestedItem().copyWithCount(1)
+				);
+			} else {
+				this.activeRequestOriginalCounts[slot] = 0;
+				this.activeRequestRemainingCounts[slot] = 0;
+				this.activeRequestElapsedTicks[slot] = 0;
+				this.activeRequestContainer.setItem(slot, ItemStack.EMPTY);
 			}
 		}
 	}
@@ -169,13 +190,7 @@ public class RequesterChestMenu extends ChestMenu {
 				&& input == ContainerInput.PICKUP) {
 			Slot slot = getSlot(slotIndex);
 			ItemStack carried = getCarried();
-
-			if (!carried.isEmpty()) {
-				slot.setByPlayer(carried.copy());
-			} else {
-				slot.setByPlayer(ItemStack.EMPTY);
-			}
-
+			slot.setByPlayer(carried.isEmpty() ? ItemStack.EMPTY : carried.copy());
 			broadcastChanges();
 			return;
 		}
@@ -195,37 +210,23 @@ public class RequesterChestMenu extends ChestMenu {
 
 	@Override
 	public ItemStack quickMoveStack(Player player, int slotIndex) {
-		if (slotIndex < 0 || slotIndex >= slots.size()) {
-			return ItemStack.EMPTY;
-		}
-
-		if (slotIndex >= REQUEST_SLOT_START) {
-			return ItemStack.EMPTY;
-		}
+		if (slotIndex < 0 || slotIndex >= slots.size()) return ItemStack.EMPTY;
+		if (slotIndex >= REQUEST_SLOT_START) return ItemStack.EMPTY;
 
 		Slot slot = slots.get(slotIndex);
-		if (!slot.hasItem()) {
-			return ItemStack.EMPTY;
-		}
+		if (!slot.hasItem()) return ItemStack.EMPTY;
 
 		ItemStack source = slot.getItem();
 		ItemStack copy = source.copy();
 
 		if (slotIndex < CHEST_SLOT_COUNT) {
-			if (!moveItemStackTo(source, CHEST_SLOT_COUNT, REQUEST_SLOT_START, true)) {
-				return ItemStack.EMPTY;
-			}
+			if (!moveItemStackTo(source, CHEST_SLOT_COUNT, REQUEST_SLOT_START, true)) return ItemStack.EMPTY;
 		} else {
-			if (!moveItemStackTo(source, 0, CHEST_SLOT_COUNT, false)) {
-				return ItemStack.EMPTY;
-			}
+			if (!moveItemStackTo(source, 0, CHEST_SLOT_COUNT, false)) return ItemStack.EMPTY;
 		}
 
-		if (source.isEmpty()) {
-			slot.setByPlayer(ItemStack.EMPTY);
-		} else {
-			slot.setChanged();
-		}
+		if (source.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
+		else slot.setChanged();
 
 		return copy;
 	}
@@ -236,7 +237,6 @@ public class RequesterChestMenu extends ChestMenu {
 		private RequestContainer(ChestBlockEntity chest) {
 			super(REQUEST_SLOT_COUNT);
 			this.chest = chest;
-
 			if (chest instanceof RequesterChestAccess access) {
 				for (int slot = 0; slot < REQUEST_SLOT_COUNT; slot++) {
 					super.setItem(slot, access.requestergolems$getRequest(slot));
@@ -247,7 +247,6 @@ public class RequesterChestMenu extends ChestMenu {
 		@Override
 		public void setItem(int slot, ItemStack stack) {
 			super.setItem(slot, stack);
-
 			if (chest instanceof RequesterChestAccess access) {
 				access.requestergolems$setRequest(slot, stack);
 			}
