@@ -37,7 +37,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			}
 		}
 
-		// Active jobs. Each row is a transaction with its current progress.
+		// Active requests. Each row is one high-level request with its current progress.
 		graphics.fill(this.leftPos + 4, this.topPos + 64, this.leftPos + this.imageWidth - 4, this.topPos + 176, 0xFF8B8B8B);
 		Component activeRequestsLabel = Component.translatable("container.requestergolems.active_requests");
 		graphics.text(
