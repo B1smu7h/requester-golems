@@ -112,6 +112,39 @@ public class RequesterChestMenu extends ChestMenu {
 		}
 	}
 
+	public void requestergolems$setSettingsView(boolean settingsView) {
+		for (int row = 0; row < 3; row++) {
+			for (int column = 0; column < 9; column++) {
+				int slot = column + row * 9;
+				Slot chestSlot = this.slots.get(slot);
+				chestSlot.x = settingsView ? -100 : 8 + column * 18;
+				chestSlot.y = settingsView ? -100 : 24 + row * 18;
+			}
+		}
+
+		for (int row = 0; row < 3; row++) {
+			for (int column = 0; column < 9; column++) {
+				int slot = 27 + column + row * 9;
+				Slot inventorySlot = this.slots.get(slot);
+				inventorySlot.x = settingsView ? -100 : 8 + column * 18;
+				inventorySlot.y = settingsView ? -100 : 126 + row * 18;
+			}
+		}
+
+		for (int column = 0; column < 9; column++) {
+			int slot = 54 + column;
+			Slot hotbarSlot = this.slots.get(slot);
+			hotbarSlot.x = settingsView ? -100 : 8 + column * 18;
+			hotbarSlot.y = settingsView ? -100 : 180;
+		}
+
+		for (int column = 0; column < REQUEST_SLOT_COUNT; column++) {
+			Slot requestSlot = this.slots.get(REQUEST_SLOT_START + column);
+			requestSlot.x = settingsView ? -100 : REQUEST_X + column * 18;
+			requestSlot.y = settingsView ? -100 : REQUEST_Y;
+		}
+	}
+
 	@Override
 	public void broadcastChanges() {
 		this.requestergolems$syncActiveRequests();
