@@ -13,7 +13,6 @@ import net.minecraft.world.item.ItemStack;
 
 public class RequesterChestScreen extends AbstractContainerScreen<RequesterChestMenu> {
 	private static final int MAIN_HEIGHT = 208;
-	private static final int SETTINGS_HEIGHT = 184;
 	private static final int SETTINGS_LIST_TOP = 28;
 	private static final int SETTINGS_LIST_BOTTOM = 164;
 	private static final int SETTINGS_ROW_HEIGHT = 20;
@@ -40,14 +39,12 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		this.clearWidgets();
 
 		if (this.settingsMode) {
-			this.imageHeight = SETTINGS_HEIGHT;
 			this.modeButton = this.addRenderableWidget(
 					Button.builder(Component.literal("<"), button -> this.setSettingsMode(false))
 							.bounds(this.leftPos + 148, this.topPos + 4, 24, 20)
 							.build()
 			);
 		} else {
-			this.imageHeight = MAIN_HEIGHT;
 			this.modeButton = this.addRenderableWidget(
 					Button.builder(Component.literal("⚙"), button -> this.setSettingsMode(true))
 							.bounds(this.leftPos + 148, this.topPos + 4, 24, 20)
@@ -59,15 +56,9 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	private void setSettingsMode(boolean settings) {
 		this.settingsMode = settings;
 		this.scrollOffset = 0;
-		this.imageHeight = settings ? SETTINGS_HEIGHT : MAIN_HEIGHT;
 		this.rebuildWidgets();
 	}
 
-	@Override
-	protected void repositionElements() {
-		super.repositionElements();
-		this.imageHeight = this.settingsMode ? SETTINGS_HEIGHT : MAIN_HEIGHT;
-	}
 
 	@Override
 	protected void extractSlots(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -174,7 +165,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		if (this.settingsMode) {
 			Component title = Component.translatable("container.requestergolems.active_requests");
 			graphics.text(this.font, title,
-					this.leftPos + 8, this.topPos + 8, 0xFF404040, false);
+					8, 8, 0xFF404040, false);
 
 			int count = this.menu.requestergolems$getActiveRequestCount();
 			for (int visible = 0; visible < SETTINGS_VISIBLE_ROWS; visible++) {
@@ -185,33 +176,33 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				if (stack.isEmpty()) continue;
 
 				int y = this.topPos + SETTINGS_LIST_TOP + visible * SETTINGS_ROW_HEIGHT + 2;
-				graphics.item(stack, this.leftPos + 9, y);
-				graphics.itemDecorations(this.font, stack, this.leftPos + 9, y);
+				graphics.item(stack, 9, y);
+				graphics.itemDecorations(this.font, stack, 9, y);
 
 				String name = stack.getHoverName().getString();
 				if (name.length() > 18) name = name.substring(0, 17) + "…";
 				graphics.text(this.font, Component.literal(name),
-						this.leftPos + 30, y + 3, 0xFF404040, false);
+						30, y + 3, 0xFF404040, false);
 
 				graphics.text(this.font, Component.literal(
 						formatElapsed(this.menu.requestergolems$getActiveRequestElapsedTicks(index))),
-					this.leftPos + 100, y + 3, 0xFF404040, false);
+					100, y + 3, 0xFF404040, false);
 
 				int delivered = this.menu.requestergolems$getActiveRequestOriginalCount(index)
 						- this.menu.requestergolems$getActiveRequestRemainingCount(index);
 				graphics.text(this.font, Component.literal(
 						delivered + "/" + this.menu.requestergolems$getActiveRequestOriginalCount(index)),
-						this.leftPos + 136, y + 3, 0xFF404040, false);
+						136, y + 3, 0xFF404040, false);
 			}
 
 			return;
 		}
 
-		graphics.text(this.font, this.title, this.leftPos + this.titleLabelX, this.topPos + this.titleLabelY, 0xFF404040, false);
+		graphics.text(this.font, this.title, this.titleLabelX, this.titleLabelY, 0xFF404040, false);
 		graphics.text(this.font, Component.translatable("container.requestergolems.requests"),
-				this.leftPos + 104, this.topPos + 86, 0xFF404040, false);
+				104, 86, 0xFF404040, false);
 		graphics.text(this.font, this.playerInventoryTitle,
-				this.leftPos + this.inventoryLabelX, this.topPos + this.inventoryLabelY, 0xFF404040, false);
+				this.inventoryLabelX, this.inventoryLabelY, 0xFF404040, false);
 	}
 
 	@Override
