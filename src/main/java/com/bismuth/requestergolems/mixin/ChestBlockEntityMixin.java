@@ -35,6 +35,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	private static final String ACTIVE_JOB_COUNT_KEY = "requestergolems:active_job_count";
 	private static final String ACTIVE_JOB_ID_PREFIX = "requestergolems:active_job_id_";
 	private static final String ACTIVE_JOB_ITEM_PREFIX = "requestergolems:active_job_item_";
+	private static final String ACTIVE_JOB_ORIGINAL_COUNT_PREFIX = "requestergolems:active_job_original_count_";
 	private static final String REDSTONE_KEY = "requestergolems:redstone_powered";
 
 	private boolean requestergolems$requester;
@@ -218,6 +219,7 @@ private boolean requestergolems$completionPulse;
 			RequesterJob job = this.requestergolems$activeJobs().get(index);
 			output.putString(ACTIVE_JOB_ID_PREFIX + index, job.id().toString());
 			output.store(ACTIVE_JOB_ITEM_PREFIX + index, ItemStack.CODEC, job.stack());
+			output.putInt(ACTIVE_JOB_ORIGINAL_COUNT_PREFIX + index, job.originalCount());
 		}
 
 		for (int slot = 0; slot < RequesterChestAccess.REQUEST_SLOT_COUNT; slot++) {
@@ -246,7 +248,12 @@ private boolean requestergolems$completionPulse;
 				// A job that was in progress when the chunk was saved has no
 				// surviving worker reference, so it safely returns to WAITING.
 				this.requestergolems$activeJobs().add(
-						new RequesterJob(UUID.fromString(idString), stack, RequesterJob.State.WAITING)
+						new RequesterJob(
+							UUID.fromString(idString),
+							stack,
+							input.getIntOr(ACTIVE_JOB_ORIGINAL_COUNT_PREFIX + index, stack.getCount()),
+							RequesterJob.State.WAITING
+						)
 				);
 			} catch (IllegalArgumentException ignored) {
 				// Ignore malformed job IDs rather than making the whole chest fail to load.
