@@ -59,16 +59,21 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	private void setSettingsMode(boolean settings) {
 		this.settingsMode = settings;
 		this.scrollOffset = 0;
-		this.rebuildWidgets();
 		this.imageHeight = settings ? SETTINGS_HEIGHT : MAIN_HEIGHT;
-		this.repositionElements();
-		this.init(this.width, this.height);
+		this.rebuildWidgets();
 	}
 
 	@Override
 	protected void repositionElements() {
 		super.repositionElements();
 		this.imageHeight = this.settingsMode ? SETTINGS_HEIGHT : MAIN_HEIGHT;
+	}
+
+	@Override
+	protected void extractSlots(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+		if (!this.settingsMode) {
+			super.extractSlots(graphics, mouseX, mouseY);
+		}
 	}
 
 	@Override
@@ -166,8 +171,6 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 	@Override
 	protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-		super.extractLabels(graphics, mouseX, mouseY);
-
 		if (this.settingsMode) {
 			Component title = Component.translatable("container.requestergolems.active_requests");
 			graphics.text(this.font, title,
@@ -204,11 +207,30 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			return;
 		}
 
-		graphics.text(this.font, this.title, this.titleLabelX, this.titleLabelY, 0xFF404040, false);
+		graphics.text(this.font, this.title, this.leftPos + this.titleLabelX, this.topPos + this.titleLabelY, 0xFF404040, false);
 		graphics.text(this.font, Component.translatable("container.requestergolems.requests"),
 				this.leftPos + 104, this.topPos + 86, 0xFF404040, false);
 		graphics.text(this.font, this.playerInventoryTitle,
 				this.inventoryLabelX, this.inventoryLabelY, 0xFF404040, false);
+	}
+
+	@Override
+	protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+		if (this.settingsMode && this.isInsideSettingsList(mouseX, mouseY)) {
+			int visible = (int)((mouseY - (this.topPos + SETTINGS_LIST_TOP)) / SETTINGS_ROW_HEIGHT);
+			int index = this.scrollOffset + visible;
+			if (visible >= 0 && visible < SETTINGS_VISIBLE_ROWS
+					&& index < this.menu.requestergolems$getActiveRequestCount()
+					&& !this.menu.requestergolems$getActiveRequestStack(index).isEmpty()) {
+				graphics.setTooltipForNextFrame(
+						Component.translatable("container.requestergolems.cancel_request"),
+						mouseX,
+						mouseY
+				);
+				return;
+			}
+		}
+		super.extractTooltip(graphics, mouseX, mouseY);
 	}
 
 	private static String formatElapsed(int ticks) {
