@@ -23,7 +23,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	// This keeps separate bases from accidentally sharing workers across the server.
 	private static final int REQUEST_RANGE_HORIZONTAL = 32;
 	private static final int REQUEST_RANGE_VERTICAL = 8;
-	private static final double INTERACTION_DISTANCE_SQR = 3.0;
+	private static final double INTERACTION_DISTANCE_SQR = 4.0;
 	private static final int TARGET_INTERACTION_TICKS = 20;
 
 	private BlockPos requesterChestPos;
