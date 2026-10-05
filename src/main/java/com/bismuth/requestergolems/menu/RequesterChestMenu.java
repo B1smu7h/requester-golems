@@ -24,8 +24,9 @@ public class RequesterChestMenu extends ChestMenu {
 
 	private static final int REQUEST_X = 43;
 	private static final int REQUEST_Y = 22;
-	private static final int ACTIVE_JOB_X = 43;
-	private static final int ACTIVE_JOB_Y = 72;
+	private static final int ACTIVE_JOB_LEFT_X = 8;
+	private static final int ACTIVE_JOB_RIGHT_X = 96;
+	private static final int ACTIVE_JOB_Y = 82;
 
 	private final Container requestContainer;
 	private final SimpleContainer activeJobContainer;
@@ -80,7 +81,7 @@ public class RequesterChestMenu extends ChestMenu {
 						inventory,
 					inventorySlot,
 					8 + column * 18,
-					201 + row * 18
+					257 + row * 18
 				);
 				replacement.index = slot;
 				this.slots.set(slot, replacement);
@@ -93,7 +94,7 @@ public class RequesterChestMenu extends ChestMenu {
 					inventory,
 					column,
 					8 + column * 18,
-					255
+					311
 			);
 			replacement.index = slot;
 			this.slots.set(slot, replacement);
@@ -106,10 +107,11 @@ public class RequesterChestMenu extends ChestMenu {
 			}
 		}
 
-		for (int row = 0; row < 2; row++) {
-			for (int column = 0; column < 5; column++) {
-				int slot = column + row * 5;
-				addSlot(new Slot(activeJobContainer, slot, ACTIVE_JOB_X + column * 18, ACTIVE_JOB_Y + row * 18));
+		for (int row = 0; row < 5; row++) {
+			for (int column = 0; column < 2; column++) {
+				int slot = column + row * 2;
+				int x = column == 0 ? ACTIVE_JOB_LEFT_X : ACTIVE_JOB_RIGHT_X;
+				addSlot(new Slot(activeJobContainer, slot, x, ACTIVE_JOB_Y + row * 18));
 			}
 		}
 	}
