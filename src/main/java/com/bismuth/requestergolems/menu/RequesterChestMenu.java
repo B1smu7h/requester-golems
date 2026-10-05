@@ -118,12 +118,14 @@ public class RequesterChestMenu extends ChestMenu {
 		for (int row = 0; row < 3; row++) {
 			for (int column = 0; column < 9; column++) {
 				int slot = column + row * 9;
-				this.slots.set(slot, new Slot(
+				Slot replacement = new Slot(
 						this.getContainer(),
 						slot,
 						settingsView ? -100 : 8 + column * 18,
 						settingsView ? -100 : 24 + row * 18
-				));
+				);
+				replacement.index = slot;
+				this.slots.set(slot, replacement);
 			}
 		}
 
@@ -131,33 +133,39 @@ public class RequesterChestMenu extends ChestMenu {
 			for (int column = 0; column < 9; column++) {
 				int slot = 27 + column + row * 9;
 				int inventorySlot = 9 + column + row * 9;
-				this.slots.set(slot, new Slot(
+				Slot replacement = new Slot(
 						this.playerInventory,
 						inventorySlot,
 						settingsView ? -100 : 8 + column * 18,
 						settingsView ? -100 : 126 + row * 18
-				));
+				);
+				replacement.index = slot;
+				this.slots.set(slot, replacement);
 			}
 		}
 
 		for (int column = 0; column < 9; column++) {
 			int slot = 54 + column;
-			this.slots.set(slot, new Slot(
+			Slot replacement = new Slot(
 						this.playerInventory,
 						column,
 						settingsView ? -100 : 8 + column * 18,
 						settingsView ? -100 : 180
-			));
+			);
+			replacement.index = slot;
+			this.slots.set(slot, replacement);
 		}
 
 		for (int column = 0; column < REQUEST_SLOT_COUNT; column++) {
 			int slot = REQUEST_SLOT_START + column;
-			this.slots.set(slot, new Slot(
+			Slot replacement = new Slot(
 						this.requestContainer,
 						column,
 						settingsView ? -100 : REQUEST_X + column * 18,
 						settingsView ? -100 : REQUEST_Y
-				));
+			);
+			replacement.index = slot;
+			this.slots.set(slot, replacement);
 		}
 	}
 
