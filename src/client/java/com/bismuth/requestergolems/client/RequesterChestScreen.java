@@ -27,7 +27,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				Component.translatable("container.requestergolems.requests"),
 				this.leftPos + this.imageWidth / 2,
 				this.topPos + 6,
-				0x404040
+				0xFF404040
 		);
 
 		for (int row = 0; row < 2; row++) {
@@ -43,7 +43,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				Component.translatable("container.requestergolems.active_jobs"),
 				this.leftPos + this.imageWidth / 2,
 				this.topPos + 66,
-				0x404040
+				0xFF404040
 		);
 
 		for (int row = 0; row < 5; row++) {
@@ -58,7 +58,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				Component.translatable("container.requestergolems.storage"),
 				this.leftPos + 8,
 				this.topPos + 181,
-				0x404040
+				0xFF404040
 		);
 
 		for (int row = 0; row < 3; row++) {
@@ -93,7 +93,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				this.playerInventoryTitle,
 				this.leftPos + this.inventoryLabelX,
 				this.topPos + this.inventoryLabelY,
-				0x404040
+				0xFF404040
 		);
 
 		for (int row = 0; row < 5; row++) {
@@ -113,7 +113,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 						Component.literal(progress),
 						this.leftPos + x + 20,
 						this.topPos + y + 5,
-						0x404040
+						0xFF404040
 				);
 			}
 		}
