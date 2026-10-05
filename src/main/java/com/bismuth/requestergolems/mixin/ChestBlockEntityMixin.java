@@ -130,6 +130,13 @@ private boolean requestergolems$completionPulse;
 	}
 
 	@Override
+	public List<RequesterJob> requestergolems$getActiveJobs() {
+		return this.requestergolems$activeJobs().stream()
+				.map(RequesterJob::copy)
+				.toList();
+	}
+
+	@Override
 	public RequesterJob requestergolems$claimJob() {
 		for (RequesterJob job : this.requestergolems$activeJobs()) {
 			if (job.state() == RequesterJob.State.WAITING && !job.isComplete()) {
