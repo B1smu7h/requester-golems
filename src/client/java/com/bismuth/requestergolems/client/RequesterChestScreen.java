@@ -286,6 +286,10 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 					int index = this.scrollOffset + visible;
 					if (index < this.menu.requestergolems$getActiveRequestCount()
 							&& this.minecraft.gameMode != null && this.minecraft.player != null) {
+						com.bismuth.requestergolems.RequesterGolems.LOGGER.info(
+								"CLIENT cancellation click: index={}, visible={}, mouse=({}, {}), count={}",
+								index, visible, event.x(), event.y(), this.menu.requestergolems$getActiveRequestCount()
+						);
 						ClientPlayNetworking.send(new CancelRequesterRequestPayload(index));
 						return true;
 					}
