@@ -2,6 +2,7 @@ package com.bismuth.requestergolems.ai;
 
 import com.bismuth.requestergolems.RequesterChestAccess;
 import com.bismuth.requestergolems.RequesterGolemAccess;
+import com.bismuth.requestergolems.RequesterJob;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -30,7 +31,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 	private BlockPos requesterChestPos;
 	private BlockPos sourceChestPos;
-	private ItemStack job = ItemStack.EMPTY;
+	private RequesterJob job;
 	private boolean carrying;
 	private int interactionTicks;
 	private InteractionPhase interactionPhase = InteractionPhase.NONE;
@@ -70,12 +71,12 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		}
 
 		this.job = requesterChest.requestergolems$claimJob();
-		if (this.job.isEmpty()) {
+		if (this.job == null) {
 			this.reset();
 			return;
 		}
 
-		this.sourceChestPos = this.findSourceChest(level, body, this.job);
+		this.sourceChestPos = this.findSourceChest(level, body, this.job.stack());
 		if (this.sourceChestPos == null) {
 			requesterChest.requestergolems$returnJob(this.job);
 			this.reset();
@@ -89,16 +90,28 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 	@Override
 	protected boolean canStillUse(ServerLevel level, CopperGolem body, long timestamp) {
-		return !this.job.isEmpty() || this.carrying;
+		return !this.job == null || this.carrying;
 	}
 
 	@Override
 	protected void tick(ServerLevel level, CopperGolem body, long timestamp) {
-		if (this.requesterChestPos == null || (this.job.isEmpty() && !this.carrying)) return;
+		if (this.requesterChestPos == null || (this.job == null && !this.carrying)) return;
+
+		if (this.job != null) {
+			BlockEntity jobChestEntity = level.getBlockEntity(this.requesterChestPos);
+			if (!(jobChestEntity instanceof RequesterChestAccess jobChest)
+					|| !jobChest.requestergolems$isJobActive(this.job.id())) {
+				this.returnCarriedToSource(level, body);
+				this.job = null;
+				this.carrying = !body.getMainHandItem().isEmpty();
+				if (!this.carrying) this.reset();
+				return;
+			}
+		}
 
 		if (!this.carrying) {
 			if (this.sourceChestPos == null) {
-				this.sourceChestPos = this.findSourceChest(level, body, this.job);
+				this.sourceChestPos = this.findSourceChest(level, body, this.job.stack());
 				if (this.sourceChestPos == null) {
 					this.failAndRetry(level, body);
 					return;
@@ -130,7 +143,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			if (this.interactionPhase == InteractionPhase.PICKING_UP) {
 				if (--this.interactionTicks > 0) return;
 
-				int available = Math.max(0, countMatching(source, this.job) - 1);
+				int available = Math.max(0, countMatching(source, this.job.stack()) - 1);
 				if (available <= 0) {
 					source.stopOpen(body);
 					body.clearOpenedChestPos();
@@ -140,8 +153,8 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 					return;
 				}
 
-				int amount = Math.min(this.job.getCount(), Math.min(16, available));
-				ItemStack picked = removeMatching(source, this.job, amount);
+				int amount = Math.min(this.job.stack().getCount(), Math.min(16, available));
+				ItemStack picked = removeMatching(source, this.job.stack(), amount);
 				source.stopOpen(body);
 				body.clearOpenedChestPos();
 				this.interactionPhase = InteractionPhase.NONE;
@@ -205,18 +218,20 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
-		this.job.shrink(delivered);
-		if (this.job.isEmpty()) {
+		this.job.stack().shrink(delivered);
+		if (this.job.isComplete()) {
 			BlockEntity destinationEntity = level.getBlockEntity(this.requesterChestPos);
-			if (destinationEntity instanceof RequesterChestAccess requesterAccess
-					&& !requesterAccess.requestergolems$hasActiveJobs()) {
-				requesterAccess.requestergolems$emitCompletionPulse();
+			if (destinationEntity instanceof RequesterChestAccess requesterAccess) {
+				requesterAccess.requestergolems$completeJob(this.job.id());
+				if (!requesterAccess.requestergolems$hasActiveJobs()) {
+					requesterAccess.requestergolems$emitCompletionPulse();
+				}
 			}
 		}
 		body.setItemSlot(EquipmentSlot.MAINHAND, remainder);
 		this.carrying = !remainder.isEmpty();
 
-		if (this.job.isEmpty()) {
+		if (this.job == null) {
 			if (!this.carrying) {
 				this.reset();
 			}
@@ -240,7 +255,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		if (this.carrying) {
 			this.returnCarriedToSource(level, body);
 		}
-		if (!this.job.isEmpty()) {
+		if (!this.job == null) {
 			this.returnJob(level);
 		}
 		body.setState(CopperGolemState.IDLE);
@@ -450,19 +465,19 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	}
 
 	private void returnJob(ServerLevel level) {
-		if (this.job.isEmpty() || this.requesterChestPos == null) return;
+		if (this.job == null || this.requesterChestPos == null) return;
 
 		BlockEntity entity = level.getBlockEntity(this.requesterChestPos);
 		if (entity instanceof RequesterChestAccess requester) {
 			requester.requestergolems$returnJob(this.job);
 		}
-		this.job = ItemStack.EMPTY;
+		this.job = null;
 	}
 
 	private void reset() {
 		this.requesterChestPos = null;
 		this.sourceChestPos = null;
-		this.job = ItemStack.EMPTY;
+		this.job = null;
 		this.carrying = false;
 		this.interactionTicks = 0;
 		this.interactionPhase = InteractionPhase.NONE;
