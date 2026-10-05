@@ -92,6 +92,12 @@ private boolean requestergolems$completionPulse;
 	}
 
 	@Override
+	public void requestergolems$clearCompletionPulse() {
+		this.requestergolems$completionPulse = false;
+		((ChestBlockEntity) (Object) this).setChanged();
+	}
+
+	@Override
 	public void requestergolems$activateRequests() {
 		if (!this.requestergolems$requester) return;
 		for (ItemStack request : this.requestergolems$requests()) {
@@ -143,19 +149,6 @@ private boolean requestergolems$completionPulse;
 
 		this.requestergolems$requests().set(slot, stack.copy());
 		((ChestBlockEntity) (Object) this).setChanged();
-	}
-
-	@Inject(method = "tick", at = @At("HEAD"))
-	private void requestergolems$tickCompletionPulse(
-			CallbackInfo ci
-	) {
-		if (!this.requestergolems$completionPulse) return;
-		this.requestergolems$completionPulse = false;
-		ChestBlockEntity chest = (ChestBlockEntity) (Object) this;
-		if (chest.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
-			level.updateNeighborsAt(chest.getBlockPos(), level.getBlockState(chest.getBlockPos()).getBlock());
-		}
-		chest.setChanged();
 	}
 
 	@Inject(method = "createMenu", at = @At("HEAD"), cancellable = true)
