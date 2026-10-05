@@ -1,5 +1,6 @@
 package com.bismuth.requestergolems;
 
+import java.util.UUID;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -26,9 +27,15 @@ public interface RequesterChestAccess {
 
 	boolean requestergolems$hasActiveJobs();
 
-	ItemStack requestergolems$claimJob();
+	RequesterJob requestergolems$claimJob();
 
-	void requestergolems$returnJob(ItemStack job);
+	void requestergolems$returnJob(RequesterJob job);
+
+	boolean requestergolems$isJobActive(UUID jobId);
+
+	void requestergolems$completeJob(UUID jobId);
+
+	boolean requestergolems$cancelJob(UUID jobId);
 
 	ItemStack requestergolems$getRequest(int slot);
 
