@@ -175,7 +175,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				ItemStack stack = this.menu.requestergolems$getActiveRequestStack(index);
 				if (stack.isEmpty()) continue;
 
-				int y = this.topPos + SETTINGS_LIST_TOP + visible * SETTINGS_ROW_HEIGHT + 2;
+				int y = SETTINGS_LIST_TOP + visible * SETTINGS_ROW_HEIGHT + 2;
 				graphics.item(stack, 9, y);
 				graphics.itemDecorations(this.font, stack, 9, y);
 
