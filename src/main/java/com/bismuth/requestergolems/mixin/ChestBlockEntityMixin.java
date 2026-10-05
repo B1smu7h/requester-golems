@@ -9,6 +9,7 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import com.bismuth.requestergolems.menu.RequesterChestMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -30,15 +31,18 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	private static final String REQUESTER_KEY = "requestergolems:requester";
 	private static final String REQUEST_KEY_PREFIX = "requestergolems:request_";
 	private static final String ACTIVE_JOBS_KEY = "requestergolems:active_jobs";
+	private static final String ACTIVE_JOB_COUNT_KEY = "requestergolems:active_job_count";
+	private static final String ACTIVE_JOB_ID_PREFIX = "requestergolems:active_job_id_";
+	private static final String ACTIVE_JOB_ITEM_PREFIX = "requestergolems:active_job_item_";
 	private static final String REDSTONE_KEY = "requestergolems:redstone_powered";
 
 	private boolean requestergolems$requester;
 	private boolean requestergolems$redstonePowered;
 private boolean requestergolems$completionPulse;
-	private List<ItemStack> requestergolems$activeJobs;
+	private List<RequesterJob> requestergolems$activeJobs;
 	private NonNullList<ItemStack> requestergolems$requests;
 
-	private List<ItemStack> requestergolems$activeJobs() {
+	private List<RequesterJob> requestergolems$activeJobs() {
 		if (this.requestergolems$activeJobs == null) {
 			this.requestergolems$activeJobs = new ArrayList<>();
 		}
@@ -109,7 +113,9 @@ private boolean requestergolems$completionPulse;
 			int remaining = request.getCount();
 			while (remaining > 0) {
 				int amount = Math.min(16, remaining);
-				this.requestergolems$activeJobs().add(request.copyWithCount(amount));
+				this.requestergolems$activeJobs().add(
+						RequesterJob.create(request.copyWithCount(amount))
+				);
 				remaining -= amount;
 			}
 		}
@@ -118,23 +124,51 @@ private boolean requestergolems$completionPulse;
 
 	@Override
 	public boolean requestergolems$hasActiveJobs() {
-		return !this.requestergolems$activeJobs().isEmpty();
+		return this.requestergolems$activeJobs().stream()
+				.anyMatch(job -> !job.isComplete());
 	}
 
 	@Override
-	public ItemStack requestergolems$claimJob() {
-		if (this.requestergolems$activeJobs().isEmpty()) return ItemStack.EMPTY;
-		ItemStack job = this.requestergolems$activeJobs().remove(0);
+	public RequesterJob requestergolems$claimJob() {
+		for (RequesterJob job : this.requestergolems$activeJobs()) {
+			if (job.state() == RequesterJob.State.WAITING && !job.isComplete()) {
+				job.setState(RequesterJob.State.IN_PROGRESS);
+				((ChestBlockEntity) (Object) this).setChanged();
+				return job;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public void requestergolems$returnJob(RequesterJob job) {
+		if (job == null || job.isComplete()) return;
+		job.setState(RequesterJob.State.WAITING);
+		if (!this.requestergolems$activeJobs().contains(job)) {
+			this.requestergolems$activeJobs().add(0, job);
+		}
 		((ChestBlockEntity) (Object) this).setChanged();
-		return job;
 	}
 
 	@Override
-	public void requestergolems$returnJob(ItemStack job) {
-		if (!job.isEmpty()) {
-			this.requestergolems$activeJobs().add(0, job.copy());
+	public boolean requestergolems$isJobActive(UUID jobId) {
+		return this.requestergolems$activeJobs().stream()
+				.anyMatch(job -> job.id().equals(jobId) && !job.isComplete());
+	}
+
+	@Override
+	public void requestergolems$completeJob(UUID jobId) {
+		this.requestergolems$activeJobs().removeIf(job -> job.id().equals(jobId));
+		((ChestBlockEntity) (Object) this).setChanged();
+	}
+
+	@Override
+	public boolean requestergolems$cancelJob(UUID jobId) {
+		boolean removed = this.requestergolems$activeJobs().removeIf(job -> job.id().equals(jobId));
+		if (removed) {
 			((ChestBlockEntity) (Object) this).setChanged();
 		}
+		return removed;
 	}
 
 	@Override
@@ -171,8 +205,12 @@ private boolean requestergolems$completionPulse;
 		output.putBoolean(REQUESTER_KEY, this.requestergolems$requester);
 		output.putBoolean(REDSTONE_KEY, this.requestergolems$redstonePowered);
 		// Completion pulses are transient and intentionally are not persisted.
-		ValueOutput.TypedOutputList<ItemStack> jobs = output.list(ACTIVE_JOBS_KEY, ItemStack.CODEC);
-		for (ItemStack job : this.requestergolems$activeJobs()) jobs.add(job);
+		output.putInt(ACTIVE_JOB_COUNT_KEY, this.requestergolems$activeJobs().size());
+		for (int index = 0; index < this.requestergolems$activeJobs().size(); index++) {
+			RequesterJob job = this.requestergolems$activeJobs().get(index);
+			output.putString(ACTIVE_JOB_ID_PREFIX + index, job.id().toString());
+			output.store(ACTIVE_JOB_ITEM_PREFIX + index, ItemStack.CODEC, job.stack());
+		}
 
 		for (int slot = 0; slot < RequesterChestAccess.REQUEST_SLOT_COUNT; slot++) {
 			ItemStack request = this.requestergolems$requests().get(slot);
@@ -188,7 +226,24 @@ private boolean requestergolems$completionPulse;
 		this.requestergolems$redstonePowered = input.getBooleanOr(REDSTONE_KEY, false);
 		this.requestergolems$completionPulse = false;
 		this.requestergolems$activeJobs().clear();
-		this.requestergolems$activeJobs().addAll(input.listOrEmpty(ACTIVE_JOBS_KEY, ItemStack.CODEC).stream().map(ItemStack::copy).toList());
+		int jobCount = input.getIntOr(ACTIVE_JOB_COUNT_KEY, 0);
+		for (int index = 0; index < jobCount; index++) {
+			String idString = input.getStringOr(ACTIVE_JOB_ID_PREFIX + index, "");
+			if (idString.isEmpty()) continue;
+
+			ItemStack stack = input.read(ACTIVE_JOB_ITEM_PREFIX + index, ItemStack.CODEC).orElse(ItemStack.EMPTY);
+			if (stack.isEmpty()) continue;
+
+			try {
+				// A job that was in progress when the chunk was saved has no
+				// surviving worker reference, so it safely returns to WAITING.
+				this.requestergolems$activeJobs().add(
+						new RequesterJob(UUID.fromString(idString), stack, RequesterJob.State.WAITING)
+				);
+			} catch (IllegalArgumentException ignored) {
+				// Ignore malformed job IDs rather than making the whole chest fail to load.
+			}
+		}
 
 		for (int slot = 0; slot < RequesterChestAccess.REQUEST_SLOT_COUNT; slot++) {
 			this.requestergolems$requests().set(
