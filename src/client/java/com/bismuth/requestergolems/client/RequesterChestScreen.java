@@ -104,9 +104,9 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 				int x = column == 0 ? 8 : 96;
 				int y = 82 + row * 18;
-				int remaining = jobStack.getCount();
 				int original = this.menu.requestergolems$getActiveJobOriginalCount(slot);
-				String progress = remaining + "/" + original;
+				int delivered = original - jobStack.getCount();
+				String progress = delivered + "/" + original;
 
 				graphics.text(
 						this.font,
