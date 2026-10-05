@@ -61,7 +61,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		}
 
 		for (int column = 0; column < 9; column++) {
-			drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 191);
+			drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 193);
 		}
 	}
 
