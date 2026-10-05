@@ -100,7 +100,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			if (this.sourceChestPos == null) {
 				this.sourceChestPos = this.findSourceChest(level, body, this.job);
 				if (this.sourceChestPos == null) {
-					this.failAndRetry(level);
+					this.failAndRetry(level, body);
 					return;
 				}
 			}
@@ -431,7 +431,12 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		}
 	}
 
-	private void failAndRetry(ServerLevel level) {
+	private void failAndRetry(ServerLevel level, CopperGolem body) {
+		// Roll back carried items before clearing the active job state.
+		if (this.carrying) {
+			this.returnCarriedToSource(level, body);
+			this.carrying = !body.getMainHandItem().isEmpty();
+		}
 		this.returnJob(level);
 		this.reset();
 		this.retryCooldownTicks = RETRY_COOLDOWN_TICKS;
