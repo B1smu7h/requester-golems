@@ -93,7 +93,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				RenderPipelines.GUI_TEXTURED,
 				CONTAINER_TEXTURE,
 				this.leftPos,
-				this.topPos,
+				this.topPos + 6,
 				0,
 				0,
 				this.imageWidth,
@@ -134,7 +134,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				RenderPipelines.GUI_TEXTURED,
 				CONTAINER_TEXTURE,
 				this.leftPos,
-				this.topPos + 113,
+				this.topPos + 114,
 				0,
 				126,
 				this.imageWidth,
@@ -231,7 +231,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 		graphics.text(this.font, this.title, this.titleLabelX, this.titleLabelY, 0xFF404040, false);
 		graphics.text(this.font, Component.translatable("container.requestergolems.requests"),
-				104, 86, 0xFF404040, false);
+				8, 86, 0xFF404040, false);
 		graphics.text(this.font, this.playerInventoryTitle,
 				this.inventoryLabelX, this.inventoryLabelY, 0xFF404040, false);
 	}
@@ -280,12 +280,9 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 					int index = this.scrollOffset + visible;
 					if (index < this.menu.requestergolems$getActiveRequestCount()
 							&& this.minecraft.gameMode != null && this.minecraft.player != null) {
-						this.minecraft.gameMode.handleContainerInput(
+						this.minecraft.gameMode.handleInventoryButtonClick(
 								this.menu.containerId,
-								RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + index,
-								0,
-							net.minecraft.world.inventory.ContainerInput.PICKUP,
-								this.minecraft.player
+								1000 + index
 						);
 						return true;
 					}
