@@ -91,7 +91,8 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				this.playerInventoryTitle,
 				this.inventoryLabelX,
 				this.inventoryLabelY,
-				0xFF404040
+				0xFF404040,
+				false
 		);
 
 		for (int row = 0; row < 5; row++) {
@@ -111,7 +112,8 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 						Component.literal(progress),
 						x + 20,
 						y + 5,
-						0xFF404040
+						0xFF404040,
+						false
 				);
 			}
 		}
