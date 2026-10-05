@@ -17,6 +17,8 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+		super.extractBackground(graphics, mouseX, mouseY, delta);
+
 		graphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth, this.topPos + this.imageHeight, 0xFFC6C6C6);
 		graphics.fill(this.leftPos + 4, this.topPos + 4, this.leftPos + this.imageWidth - 4, this.topPos + 58, 0xFF8B8B8B);
 		graphics.fill(this.leftPos + 4, this.topPos + 62, this.leftPos + this.imageWidth - 4, this.topPos + 120, 0xFF8B8B8B);
@@ -33,6 +35,5 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				this.topPos + 51,
 				0x404040);
 
-		super.extractBackground(graphics, mouseX, mouseY, delta);
 	}
 }
