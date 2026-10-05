@@ -1,14 +1,13 @@
 package com.bismuth.requestergolems.mixin;
 
 import com.bismuth.requestergolems.RequesterChestAccess;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BlockState;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.CopperChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -53,10 +52,7 @@ public abstract class ChestBlockMixin {
 		if (!level.isClientSide()) {
 			requesterChest.requestergolems$setRequester(true);
 
-			if (blockEntity instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chest) {
-				chest.setCustomName(Component.literal("Requester Chest"));
-				chest.setChanged();
-			}
+			blockEntity.setChanged();
 
 			itemStack.consume(1, player);
 		}
