@@ -3,20 +3,24 @@ package com.bismuth.requestergolems.client;
 import com.bismuth.requestergolems.menu.RequesterChestMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.sounds.SoundEvents;
 
 public class RequesterChestScreen extends AbstractContainerScreen<RequesterChestMenu> {
+	private static final Identifier CONTAINER_TEXTURE = Identifier.withDefaultNamespace("textures/gui/container/generic_54.png");
 	private static final int MAIN_HEIGHT = 208;
 	private static final int SETTINGS_LIST_TOP = 28;
-	private static final int SETTINGS_LIST_BOTTOM = 164;
+	private static final int SETTINGS_LIST_BOTTOM = 92;
 	private static final int SETTINGS_ROW_HEIGHT = 20;
-	private static final int SETTINGS_VISIBLE_ROWS = 6;
+	private static final int SETTINGS_VISIBLE_ROWS = 3;
 	private static final int SETTINGS_SCROLLBAR_X = 168;
 	private static final int SETTINGS_SCROLLBAR_WIDTH = 5;
 
@@ -56,6 +60,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	private void setSettingsMode(boolean settings) {
 		this.settingsMode = settings;
 		this.scrollOffset = 0;
+		this.menu.requestergolems$setSettingsView(settings);
 		this.rebuildWidgets();
 	}
 
@@ -154,10 +159,8 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	}
 
 	private void drawSlot(GuiGraphicsExtractor graphics, int x, int y) {
-		graphics.fill(x, y, x + 18, y + 18, 0xFF373737);
-		graphics.fill(x + 1, y + 1, x + 17, y + 17, 0xFF8B8B8B);
-		graphics.fill(x + 1, y + 1, x + 17, y + 2, 0xFFE8E8E8);
-		graphics.fill(x + 1, y + 1, x + 2, y + 17, 0xFFE8E8E8);
+		graphics.blit(RenderPipelines.GUI_TEXTURED, CONTAINER_TEXTURE,
+				x, y, 7.0F, 17.0F, 18, 18, 176, 222);
 	}
 
 	@Override
@@ -236,23 +239,32 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		if (this.settingsMode && event.button() == 0
-				&& this.isInsideSettingsList(event.x(), event.y())) {
-			int visible = (int)((event.y() - (this.topPos + SETTINGS_LIST_TOP)) / SETTINGS_ROW_HEIGHT);
-			if (visible >= 0 && visible < SETTINGS_VISIBLE_ROWS) {
-				int index = this.scrollOffset + visible;
-				if (index < this.menu.requestergolems$getActiveRequestCount()
-						&& this.minecraft.gameMode != null && this.minecraft.player != null) {
-					this.minecraft.gameMode.handleContainerInput(
-							this.menu.containerId,
-							RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + index,
-							0,
-							ContainerInput.PICKUP,
-							this.minecraft.player
-					);
-					return true;
+		if (this.settingsMode) {
+			// The settings page is a custom view over the same menu. Keep the
+			// underlying inventory slots completely inert while it is open.
+			if (this.isInsideModeButton(event.x(), event.y())) {
+				return super.mouseClicked(event, doubleClick);
+			}
+
+			if (event.button() == 0 && this.isInsideSettingsList(event.x(), event.y())) {
+				int visible = (int)((event.y() - (this.topPos + SETTINGS_LIST_TOP)) / SETTINGS_ROW_HEIGHT);
+				if (visible >= 0 && visible < SETTINGS_VISIBLE_ROWS) {
+					int index = this.scrollOffset + visible;
+					if (index < this.menu.requestergolems$getActiveRequestCount()
+							&& this.minecraft.gameMode != null && this.minecraft.player != null) {
+						this.minecraft.gameMode.handleContainerInput(
+								this.menu.containerId,
+								RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + index,
+								0,
+								ContainerInput.PICKUP,
+								this.minecraft.player
+						);
+						this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 1.0F, 1.0F);
+						return true;
+					}
 				}
 			}
+			return true;
 		}
 		return super.mouseClicked(event, doubleClick);
 	}
@@ -272,6 +284,11 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			}
 		}
 		return super.mouseScrolled(x, y, scrollX, scrollY);
+	}
+
+	private boolean isInsideModeButton(double mouseX, double mouseY) {
+		return mouseX >= this.leftPos + 148 && mouseX < this.leftPos + 172
+				&& mouseY >= this.topPos + 4 && mouseY < this.topPos + 24;
 	}
 
 	private boolean isInsideSettingsList(double mouseX, double mouseY) {
