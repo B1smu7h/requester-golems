@@ -7,11 +7,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.BlockBehaviour;
 import net.minecraft.world.level.block.CopperChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,11 +21,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /**
  * Development conversion hook for Copper Chests.
  *
- * <p>The final conversion control will live inside the requester chest UI.
- * For now, a diamond used directly on a Copper Chest establishes the
- * persistent requester mode without introducing a second block.</p>
+ * <p>ChestBlock inherits item interaction from BlockBehaviour in 26.3, so
+ * this mixin targets the common interaction method and filters it down to
+ * Copper Chests.</p>
  */
-@Mixin(ChestBlock.class)
+@Mixin(BlockBehaviour.class)
 public abstract class ChestBlockMixin {
 	@Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
 	private void requestergolems$convertWithDiamond(
@@ -51,9 +51,7 @@ public abstract class ChestBlockMixin {
 
 		if (!level.isClientSide()) {
 			requesterChest.requestergolems$setRequester(true);
-
 			blockEntity.setChanged();
-
 			itemStack.consume(1, player);
 		}
 
