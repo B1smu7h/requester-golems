@@ -1,6 +1,7 @@
 package com.bismuth.requestergolems.client;
 
 import com.bismuth.requestergolems.menu.RequesterChestMenu;
+import com.bismuth.requestergolems.network.CancelRequesterRequestPayload;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -10,7 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.ContainerInput;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -285,13 +286,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 					int index = this.scrollOffset + visible;
 					if (index < this.menu.requestergolems$getActiveRequestCount()
 							&& this.minecraft.gameMode != null && this.minecraft.player != null) {
-						this.minecraft.gameMode.handleContainerInput(
-								this.menu.containerId,
-								RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + index,
-								0,
-								ContainerInput.PICKUP,
-								this.minecraft.player
-						);
+						ClientPlayNetworking.send(new CancelRequesterRequestPayload(index));
 						return true;
 					}
 				}
