@@ -13,7 +13,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		this.titleLabelX = 8;
 		this.titleLabelY = 6;
 		this.inventoryLabelX = 8;
-		this.inventoryLabelY = 239;
+		this.inventoryLabelY = 244;
 	}
 
 	@Override
@@ -22,12 +22,13 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 		// Request area.
 		graphics.fill(this.leftPos + 4, this.topPos + 4, this.leftPos + this.imageWidth - 4, this.topPos + 60, 0xFF8B8B8B);
-		graphics.centeredText(
+		graphics.text(
 				this.font,
 				Component.translatable("container.requestergolems.requests"),
-				this.leftPos + this.imageWidth / 2,
+				this.leftPos + 104,
 				this.topPos + 6,
-				0xFF404040
+				0xFF404040,
+				false
 		);
 
 		for (int row = 0; row < 2; row++) {
@@ -38,12 +39,14 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 		// Active jobs. Each row is a transaction with its current progress.
 		graphics.fill(this.leftPos + 4, this.topPos + 64, this.leftPos + this.imageWidth - 4, this.topPos + 176, 0xFF8B8B8B);
-		graphics.centeredText(
+		Component activeJobsLabel = Component.translatable("container.requestergolems.active_jobs");
+		graphics.text(
 				this.font,
-				Component.translatable("container.requestergolems.active_jobs"),
-				this.leftPos + this.imageWidth / 2,
+				activeJobsLabel,
+				this.leftPos + (this.imageWidth - this.font.width(activeJobsLabel)) / 2,
 				this.topPos + 66,
-				0xFF404040
+				0xFF404040,
+				false
 		);
 
 		for (int row = 0; row < 5; row++) {
@@ -53,13 +56,6 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 		// Physical chest inventory.
 		graphics.fill(this.leftPos + 4, this.topPos + 180, this.leftPos + this.imageWidth - 4, this.topPos + 237, 0xFF8B8B8B);
-		graphics.text(
-				this.font,
-				Component.translatable("container.requestergolems.storage"),
-				this.leftPos + 8,
-				this.topPos + 181,
-				0xFF404040
-		);
 
 		for (int row = 0; row < 3; row++) {
 			for (int column = 0; column < 9; column++) {
