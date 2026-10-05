@@ -5,14 +5,15 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 
 public class RequesterChestScreen extends AbstractContainerScreen<RequesterChestMenu> {
 	public RequesterChestScreen(RequesterChestMenu menu, Inventory inventory, Component title) {
-		super(menu, inventory, Component.translatable("container.requestergolems.requester_chest"), 176, 284);
+		super(menu, inventory, Component.translatable("container.requestergolems.requester_chest"), 176, 340);
 		this.titleLabelX = 8;
 		this.titleLabelY = 6;
 		this.inventoryLabelX = 8;
-		this.inventoryLabelY = 185;
+		this.inventoryLabelY = 239;
 	}
 
 	@Override
@@ -35,8 +36,8 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			}
 		}
 
-		// Active jobs. Clicking an occupied slot cancels that transaction.
-		graphics.fill(this.leftPos + 4, this.topPos + 64, this.leftPos + this.imageWidth - 4, this.topPos + 120, 0xFF8B8B8B);
+		// Active jobs. Each row is a transaction with its current progress.
+		graphics.fill(this.leftPos + 4, this.topPos + 64, this.leftPos + this.imageWidth - 4, this.topPos + 176, 0xFF8B8B8B);
 		graphics.centeredText(
 				this.font,
 				Component.translatable("container.requestergolems.active_jobs"),
@@ -45,37 +46,36 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				0x404040
 		);
 
-		for (int row = 0; row < 2; row++) {
-			for (int column = 0; column < 5; column++) {
-				drawSlot(graphics, this.leftPos + 43 + column * 18, this.topPos + 72 + row * 18);
-			}
+		for (int row = 0; row < 5; row++) {
+			drawSlot(graphics, this.leftPos + 8, this.topPos + 82 + row * 18);
+			drawSlot(graphics, this.leftPos + 96, this.topPos + 82 + row * 18);
 		}
 
 		// Physical chest inventory.
-		graphics.fill(this.leftPos + 4, this.topPos + 124, this.leftPos + this.imageWidth - 4, this.topPos + 181, 0xFF8B8B8B);
+		graphics.fill(this.leftPos + 4, this.topPos + 180, this.leftPos + this.imageWidth - 4, this.topPos + 237, 0xFF8B8B8B);
 		graphics.text(
 				this.font,
 				Component.translatable("container.requestergolems.storage"),
 				this.leftPos + 8,
-				this.topPos + 125,
+				this.topPos + 181,
 				0x404040
 		);
 
 		for (int row = 0; row < 3; row++) {
 			for (int column = 0; column < 9; column++) {
-				drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 128 + row * 18);
+				drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 184 + row * 18);
 			}
 		}
 
 		// Player inventory.
 		for (int row = 0; row < 3; row++) {
 			for (int column = 0; column < 9; column++) {
-				drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 201 + row * 18);
+				drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 257 + row * 18);
 			}
 		}
 
 		for (int column = 0; column < 9; column++) {
-			drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 255);
+			drawSlot(graphics, this.leftPos + 8 + column * 18, this.topPos + 311);
 		}
 	}
 
@@ -95,5 +95,34 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				this.topPos + this.inventoryLabelY,
 				0x404040
 		);
+
+		for (int row = 0; row < 5; row++) {
+			for (int column = 0; column < 2; column++) {
+				int slot = column + row * 2;
+				ItemStack jobStack = this.menu.requestergolems$getActiveJobStack(slot);
+				if (jobStack.isEmpty()) continue;
+
+				int x = column == 0 ? 8 : 96;
+				int y = 82 + row * 18;
+				int remaining = jobStack.getCount();
+				int original = this.menu.requestergolems$getActiveJobOriginalCount(slot);
+				String progress = remaining + "/" + original;
+
+				graphics.text(
+						this.font,
+						Component.literal(progress),
+						this.leftPos + x + 20,
+						this.topPos + y + 5,
+						0x404040
+				);
+				graphics.text(
+						this.font,
+						Component.literal("×"),
+						this.leftPos + x + 72,
+						this.topPos + y + 5,
+						0x603030
+				);
+			}
+		}
 	}
 }
