@@ -67,9 +67,17 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 	@Override
 	protected void extractSlots(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-		if (!this.settingsMode) {
-			super.extractSlots(graphics, mouseX, mouseY);
+		if (this.settingsMode) return;
+		super.extractSlots(graphics, mouseX, mouseY);
+	}
+
+	@Override
+	protected void extractSlot(GuiGraphicsExtractor graphics, net.minecraft.world.inventory.Slot slot, int mouseX, int mouseY) {
+		if (slot.index >= RequesterChestMenu.ACTIVE_REQUEST_SLOT_START
+				&& slot.index < RequesterChestMenu.ACTIVE_REQUEST_SLOT_START + RequesterChestMenu.ACTIVE_REQUEST_SLOT_COUNT) {
+			return;
 		}
+		super.extractSlot(graphics, slot, mouseX, mouseY);
 	}
 
 	@Override
