@@ -6,6 +6,7 @@
 		"CopperGolemMixin",
 		"ChestBlockEntityMixin",
 		"ChestBlockMixin",
+		"ChestCompletionTickMixin",
 		"CopperGolemAiMixin",
 		"TransportItemsBetweenContainersMixin"
 	],
