@@ -60,6 +60,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	private void setSettingsMode(boolean settings) {
 		this.settingsMode = settings;
 		this.scrollOffset = 0;
+		this.menu.requestergolems$setSettingsView(settings);
 		this.rebuildWidgets();
 	}
 
