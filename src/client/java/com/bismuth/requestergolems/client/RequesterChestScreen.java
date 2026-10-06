@@ -18,8 +18,8 @@ import net.minecraft.world.item.ItemStack;
 public class RequesterChestScreen extends AbstractContainerScreen<RequesterChestMenu> {
 	private static final Identifier CONTAINER_TEXTURE = Identifier.withDefaultNamespace("textures/gui/container/generic_54.png");
 	private static final int MAIN_HEIGHT = 210;
-	private static final int SETTINGS_LIST_TOP = 28;
-	private static final int SETTINGS_LIST_BOTTOM = 88;
+	private static final int SETTINGS_LIST_TOP = 20;
+	private static final int SETTINGS_LIST_BOTTOM = 80;
 	private static final int SETTINGS_ROW_HEIGHT = 20;
 	private static final int SETTINGS_VISIBLE_ROWS = 3;
 	private static final int SETTINGS_SCROLLBAR_X = 167;
@@ -235,14 +235,14 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				256,
 				256
 		);
-		// The texture's final row is transparent in the middle, which can leave
-		// a one-pixel straight gap beneath this custom-height panel. Seal that
-		// last row so the frame meets the screen cleanly.
+		// The custom panel ends immediately after the declared image height.
+		// Close the frame one pixel beyond that boundary so the world cannot
+		// show through as a straight line underneath the bottom border.
 		graphics.fill(
 				this.leftPos,
-				this.topPos + this.imageHeight - 1,
-				this.leftPos + this.imageWidth,
 				this.topPos + this.imageHeight,
+				this.leftPos + this.imageWidth,
+				this.topPos + this.imageHeight + 1,
 				0xFF373737
 		);
 
@@ -360,7 +360,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		if (this.settingsMode) {
 			Component title = Component.translatable("container.requestergolems.active_requests");
 			graphics.text(this.font, title,
-					8, 20, 0xFF404040, false);
+					8, 6, 0xFF404040, false);
 
 			int count = this.menu.requestergolems$getActiveRequestCount();
 			for (int visible = 0; visible < SETTINGS_VISIBLE_ROWS; visible++) {
