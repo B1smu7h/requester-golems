@@ -225,18 +225,27 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			);
 		}
 
-		// Finish the bottom edge with the vanilla container palette.
+		// Finish the bottom edge as one continuous frame. Drawing across the
+		// full width also covers the side-wall corner pixels, avoiding the
+		// stray light/red corner artifact from the repeated texture strip.
 		graphics.fill(
-				this.leftPos + 7,
+				this.leftPos,
 				this.topPos + this.imageHeight - 7,
-				this.leftPos + this.imageWidth - 7,
-				this.topPos + this.imageHeight,
+				this.leftPos + this.imageWidth,
+				this.topPos + this.imageHeight - 6,
+				0xFF8B8B8B
+		);
+		graphics.fill(
+				this.leftPos,
+				this.topPos + this.imageHeight - 6,
+				this.leftPos + this.imageWidth,
+				this.topPos + this.imageHeight - 1,
 				0xFF555555
 		);
 		graphics.fill(
-				this.leftPos + 7,
-				this.topPos + this.imageHeight - 2,
-				this.leftPos + this.imageWidth - 7,
+				this.leftPos,
+				this.topPos + this.imageHeight - 1,
+				this.leftPos + this.imageWidth,
 				this.topPos + this.imageHeight,
 				0xFF373737
 		);
