@@ -257,7 +257,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 		graphics.text(this.font, this.title, this.titleLabelX, this.titleLabelY, 0xFF404040, false);
 		graphics.text(this.font, Component.translatable("container.requestergolems.requests"),
-				8, 77, 0xFF404040, false);
+				8, 85, 0xFF404040, false);
 		graphics.text(this.font, this.playerInventoryTitle,
 				this.inventoryLabelX, this.inventoryLabelY, 0xFF404040, false);
 	}
