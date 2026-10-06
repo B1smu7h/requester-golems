@@ -9,7 +9,6 @@ import net.minecraft.world.level.block.CopperChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
-import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.util.RandomSource;
 import org.spongepowered.asm.mixin.Mixin;
