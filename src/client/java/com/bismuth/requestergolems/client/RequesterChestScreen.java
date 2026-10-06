@@ -241,6 +241,20 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				256
 		);
 
+		// The vanilla texture's four extreme corner pixels are meant for the
+		// chest's normal rounded frame. This screen uses a taller plain panel,
+		// so those pixels leave small gray squares at the outer corners.
+		// Cover only those corner blocks, leaving the rest of the vanilla frame intact.
+		final int cornerSize = 5;
+		final int cornerColor = 0xFF202020;
+		graphics.fill(this.leftPos, this.topPos, this.leftPos + cornerSize, this.topPos + cornerSize, cornerColor);
+		graphics.fill(this.leftPos + this.imageWidth - cornerSize, this.topPos,
+				this.leftPos + this.imageWidth, this.topPos + cornerSize, cornerColor);
+		graphics.fill(this.leftPos, this.topPos + this.imageHeight - cornerSize,
+				this.leftPos + cornerSize, this.topPos + this.imageHeight, cornerColor);
+		graphics.fill(this.leftPos + this.imageWidth - cornerSize, this.topPos + this.imageHeight - cornerSize,
+				this.leftPos + this.imageWidth, this.topPos + this.imageHeight, cornerColor);
+
 		// Keep the request viewport uniformly black. The previous lighter outer
 		// fill left four tiny gray corner squares visible around the viewport.
 		graphics.fill(
