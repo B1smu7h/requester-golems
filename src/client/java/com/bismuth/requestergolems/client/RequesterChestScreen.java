@@ -19,7 +19,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	private static final Identifier CONTAINER_TEXTURE = Identifier.withDefaultNamespace("textures/gui/container/generic_54.png");
 	private static final int MAIN_HEIGHT = 210;
 	private static final int SETTINGS_LIST_TOP = 28;
-	private static final int SETTINGS_LIST_BOTTOM = 92;
+	private static final int SETTINGS_LIST_BOTTOM = 88;
 	private static final int SETTINGS_ROW_HEIGHT = 20;
 	private static final int SETTINGS_VISIBLE_ROWS = 3;
 	private static final int SETTINGS_SCROLLBAR_X = 168;
