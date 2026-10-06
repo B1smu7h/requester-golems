@@ -177,7 +177,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				this.leftPos + 4,
 				this.topPos + 4,
 				this.leftPos + this.imageWidth - 4,
-				this.topPos + this.imageHeight - 4,
+				this.topPos + this.imageHeight,
 				0xFFC6C6C6
 		);
 
