@@ -172,8 +172,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	}
 
 	private void extractSettingsBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-		// Use the vanilla container palette and top frame, then reserve a dark
-		// inset for the active-request list.
+		// Base panel.
 		graphics.fill(
 				this.leftPos,
 				this.topPos,
@@ -181,6 +180,8 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				this.topPos + this.imageHeight,
 				0xFFC6C6C6
 		);
+
+		// Keep the vanilla chest header texture at the top.
 		graphics.blit(
 				RenderPipelines.GUI_TEXTURED,
 				CONTAINER_TEXTURE,
@@ -192,6 +193,52 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				17,
 				256,
 				256
+		);
+
+		// Extend the vanilla container's beveled frame down the sides.
+		// The source strip is the same side-wall texture used by the main screen.
+		for (int y = 17; y < this.imageHeight - 7; y += 43) {
+			int height = Math.min(43, this.imageHeight - 7 - y);
+			graphics.blit(
+					RenderPipelines.GUI_TEXTURED,
+					CONTAINER_TEXTURE,
+					this.leftPos,
+					this.topPos + y,
+					0,
+					17,
+					7,
+					height,
+					256,
+					256
+			);
+			graphics.blit(
+					RenderPipelines.GUI_TEXTURED,
+					CONTAINER_TEXTURE,
+					this.leftPos + this.imageWidth - 7,
+					this.topPos + y,
+					169,
+					17,
+					7,
+					height,
+					256,
+					256
+			);
+		}
+
+		// Finish the bottom edge with the vanilla container palette.
+		graphics.fill(
+				this.leftPos + 7,
+				this.topPos + this.imageHeight - 7,
+				this.leftPos + this.imageWidth - 7,
+				this.topPos + this.imageHeight,
+				0xFF555555
+		);
+		graphics.fill(
+				this.leftPos + 7,
+				this.topPos + this.imageHeight - 2,
+				this.leftPos + this.imageWidth - 7,
+				this.topPos + this.imageHeight,
+				0xFF373737
 		);
 
 		// Vanilla-style dark outer edge around the request viewport.
