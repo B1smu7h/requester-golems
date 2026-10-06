@@ -23,7 +23,7 @@ public class RequesterChestMenu extends ChestMenu {
 	private static final int SETTINGS_VISIBLE_COUNT = 3;
 
 	private static final int REQUEST_X = 8;
-	private static final int REQUEST_Y = 96;
+	private static final int REQUEST_Y = 95;
 
 	private final Container requestContainer;
 	private final SimpleContainer activeRequestContainer;
@@ -130,7 +130,7 @@ public class RequesterChestMenu extends ChestMenu {
 			int visible = slot - first;
 			int x = visible >= 0 && visible < SETTINGS_VISIBLE_COUNT ? 8 : -1000;
 			int y = visible >= 0 && visible < SETTINGS_VISIBLE_COUNT
-					? 20 + visible * 20
+					? 21 + visible * 20
 					: -1000;
 
 			Slot replacement = new Slot(this.activeRequestContainer, slot, x, y);
