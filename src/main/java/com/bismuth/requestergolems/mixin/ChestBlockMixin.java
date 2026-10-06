@@ -11,6 +11,8 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.CopperChestBlock;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
@@ -115,7 +117,8 @@ public abstract class ChestBlockMixin {
 			CallbackInfoReturnable<InteractionResult> cir
 	) {
 		if (!(state.getBlock() instanceof CopperChestBlock)
-				|| !itemStack.is(Items.DIAMOND)) {
+				|| !itemStack.is(Items.DIAMOND)
+				|| state.getValue(ChestBlock.TYPE) != ChestType.SINGLE) {
 			return;
 		}
 
