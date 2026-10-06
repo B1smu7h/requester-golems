@@ -195,9 +195,11 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				256
 		);
 
-		// Extend the vanilla container side walls through the custom request area.
-		// The lower 96px are then taken directly from the vanilla generic_54
-		// texture, exactly like the main requester chest screen.
+		// Extend only the actual vanilla side-wall pixels. Do NOT draw the
+		// generic_54 lower section wholesale: that region contains the player's
+		// inventory slots, which this screen intentionally does not have.
+		final int bottomBorderHeight = 3;
+		final int sideHeight = this.imageHeight - 17 - bottomBorderHeight;
 		graphics.blit(
 				RenderPipelines.GUI_TEXTURED,
 				CONTAINER_TEXTURE,
@@ -206,7 +208,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				0,
 				17,
 				7,
-				97,
+				sideHeight,
 				256,
 				256
 		);
@@ -218,22 +220,23 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				169,
 				17,
 				7,
-				97,
+				sideHeight,
 				256,
 				256
 		);
 
-		// Exact vanilla lower container section: this supplies the real bottom
-		// corners and bottom border instead of approximating them with fills.
+		// The final three texture pixels are the vanilla container's bottom
+		// border. Sampling only this strip preserves the real corners without
+		// bringing the inventory-slot artwork with it.
 		graphics.blit(
 				RenderPipelines.GUI_TEXTURED,
 				CONTAINER_TEXTURE,
 				this.leftPos,
-				this.topPos + 114,
+				this.topPos + this.imageHeight - bottomBorderHeight,
 				0,
-				126,
+				219,
 				this.imageWidth,
-				96,
+				bottomBorderHeight,
 				256,
 				256
 		);
