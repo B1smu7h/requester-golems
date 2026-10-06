@@ -172,16 +172,42 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	}
 
 	private void extractSettingsBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-		graphics.fill(this.leftPos + 4, this.topPos + 4, this.leftPos + this.imageWidth - 4, this.topPos + 24, 0xFF8B8B8B);
+		// Use the vanilla container palette and top frame, then reserve a dark
+		// inset for the active-request list.
+		graphics.fill(
+				this.leftPos,
+				this.topPos,
+				this.leftPos + this.imageWidth,
+				this.topPos + this.imageHeight,
+				0xFFC6C6C6
+		);
+		graphics.blit(
+				RenderPipelines.GUI_TEXTURED,
+				CONTAINER_TEXTURE,
+				this.leftPos,
+				this.topPos,
+				0,
+				0,
+				this.imageWidth,
+				17,
+				256,
+				256
+		);
 
-		// Keep the request area visually distinct from the surrounding GUI while
-		// using the same simple, beveled-feeling palette as vanilla widgets.
+		// Vanilla-style dark outer edge around the request viewport.
 		graphics.fill(
 				this.leftPos + 4,
-				this.topPos + SETTINGS_LIST_TOP,
+				this.topPos + SETTINGS_LIST_TOP - 4,
 				this.leftPos + this.imageWidth - 4,
-				this.topPos + SETTINGS_LIST_BOTTOM,
-				0xFF101010
+				this.topPos + SETTINGS_LIST_BOTTOM + 4,
+				0xFF373737
+		);
+		graphics.fill(
+				this.leftPos + 6,
+				this.topPos + SETTINGS_LIST_TOP - 2,
+				this.leftPos + this.imageWidth - 6,
+				this.topPos + SETTINGS_LIST_BOTTOM + 2,
+				0xFF111111
 		);
 
 		int count = this.menu.requestergolems$getActiveRequestCount();
@@ -195,7 +221,6 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			boolean hovered = mouseX >= this.leftPos + 6 && mouseX < this.leftPos + 164
 					&& mouseY >= y && mouseY < y + SETTINGS_ROW_HEIGHT;
 
-			// Each request gets its own clearly defined clickable row.
 			int rowColor = hovered ? 0xFF303030 : 0xFF202020;
 			int borderColor = hovered ? 0xFFB0B0B0 : 0xFF555555;
 			graphics.fill(
@@ -214,13 +239,13 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			);
 		}
 
-		// Reserve scrollbar space even when there is nothing to scroll.
+		// A narrow vanilla-like scrollbar lives inside the right edge of the viewport.
 		graphics.fill(
 				this.leftPos + SETTINGS_SCROLLBAR_X,
 				this.topPos + SETTINGS_LIST_TOP,
 				this.leftPos + SETTINGS_SCROLLBAR_X + SETTINGS_SCROLLBAR_WIDTH,
 				this.topPos + SETTINGS_LIST_BOTTOM,
-				0xFF303030
+				0xFF202020
 		);
 
 		if (scrollable) {
