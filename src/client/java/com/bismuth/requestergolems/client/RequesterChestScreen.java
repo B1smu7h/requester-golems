@@ -86,7 +86,6 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
 		if (this.settingsMode) {
-			graphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth, this.topPos + this.imageHeight, 0xFFC6C6C6);
 			this.extractSettingsBackground(graphics, mouseX, mouseY);
 			return;
 		}
@@ -172,12 +171,13 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	}
 
 	private void extractSettingsBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-		// Base panel.
+		// Keep the gray body inside the vanilla frame. The transparent corner
+		// pixels of generic_54 then show the world instead of this fill.
 		graphics.fill(
-				this.leftPos,
-				this.topPos,
-				this.leftPos + this.imageWidth,
-				this.topPos + this.imageHeight,
+				this.leftPos + 4,
+				this.topPos + 4,
+				this.leftPos + this.imageWidth - 4,
+				this.topPos + this.imageHeight - 4,
 				0xFFC6C6C6
 		);
 
@@ -195,9 +195,8 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				256
 		);
 
-		// Extend only the actual vanilla side-wall pixels. Do NOT draw the
-		// generic_54 lower section wholesale: that region contains the player's
-		// inventory slots, which this screen intentionally does not have.
+		// Extend only the actual vanilla side-wall pixels. Do not draw the
+		// generic_54 lower section wholesale because it contains inventory slots.
 		final int bottomBorderHeight = 3;
 		final int sideHeight = this.imageHeight - 17 - bottomBorderHeight;
 		graphics.blit(
@@ -224,10 +223,6 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				256,
 				256
 		);
-
-		// The final three texture pixels are the vanilla container's bottom
-		// border. Sampling only this strip preserves the real corners without
-		// bringing the inventory-slot artwork with it.
 		graphics.blit(
 				RenderPipelines.GUI_TEXTURED,
 				CONTAINER_TEXTURE,
@@ -241,22 +236,21 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				256
 		);
 
-
-		// Keep the request viewport uniformly black. The previous lighter outer
-		// fill left four tiny gray corner squares visible around the viewport.
+		// Four gray pixels of breathing room around the black request viewport,
+		// matching the earlier version that looked right.
 		graphics.fill(
 				this.leftPos + 4,
 				this.topPos + SETTINGS_LIST_TOP - 4,
 				this.leftPos + this.imageWidth - 4,
 				this.topPos + SETTINGS_LIST_BOTTOM + 4,
-				0xFF111111
+				0xFFC6C6C6
 		);
 		graphics.fill(
-				this.leftPos + 6,
-				this.topPos + SETTINGS_LIST_TOP - 2,
-				this.leftPos + this.imageWidth - 6,
-				this.topPos + SETTINGS_LIST_BOTTOM + 2,
-				0xFF111111
+				this.leftPos + 4,
+				this.topPos + SETTINGS_LIST_TOP,
+				this.leftPos + this.imageWidth - 4,
+				this.topPos + SETTINGS_LIST_BOTTOM,
+				0xFF101010
 		);
 
 		int count = this.menu.requestergolems$getActiveRequestCount();
