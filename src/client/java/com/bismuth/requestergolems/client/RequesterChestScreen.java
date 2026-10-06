@@ -173,8 +173,16 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 	private void extractSettingsBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		graphics.fill(this.leftPos + 4, this.topPos + 4, this.leftPos + this.imageWidth - 4, this.topPos + 24, 0xFF8B8B8B);
-		graphics.fill(this.leftPos + 4, this.topPos + SETTINGS_LIST_TOP,
-				this.leftPos + this.imageWidth - 4, this.topPos + SETTINGS_LIST_BOTTOM, 0xFF8B8B8B);
+
+		// Keep the request area visually distinct from the surrounding GUI while
+		// using the same simple, beveled-feeling palette as vanilla widgets.
+		graphics.fill(
+				this.leftPos + 4,
+				this.topPos + SETTINGS_LIST_TOP,
+				this.leftPos + this.imageWidth - 4,
+				this.topPos + SETTINGS_LIST_BOTTOM,
+				0xFF101010
+		);
 
 		int count = this.menu.requestergolems$getActiveRequestCount();
 		boolean scrollable = count > SETTINGS_VISIBLE_ROWS;
@@ -186,12 +194,23 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			int y = this.topPos + SETTINGS_LIST_TOP + visible * SETTINGS_ROW_HEIGHT;
 			boolean hovered = mouseX >= this.leftPos + 6 && mouseX < this.leftPos + 164
 					&& mouseY >= y && mouseY < y + SETTINGS_ROW_HEIGHT;
+
+			// Each request gets its own clearly defined clickable row.
+			int rowColor = hovered ? 0xFF303030 : 0xFF202020;
+			int borderColor = hovered ? 0xFFB0B0B0 : 0xFF555555;
 			graphics.fill(
 					this.leftPos + 6,
 					y,
 					this.leftPos + 164,
 					y + SETTINGS_ROW_HEIGHT - 1,
-					hovered ? 0xFF707070 : 0xFF777777
+					rowColor
+			);
+			graphics.outline(
+					this.leftPos + 6,
+					y,
+					158,
+					SETTINGS_ROW_HEIGHT - 1,
+					borderColor
 			);
 		}
 
@@ -201,7 +220,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				this.topPos + SETTINGS_LIST_TOP,
 				this.leftPos + SETTINGS_SCROLLBAR_X + SETTINGS_SCROLLBAR_WIDTH,
 				this.topPos + SETTINGS_LIST_BOTTOM,
-				0xFF6B6B6B
+				0xFF303030
 		);
 
 		if (scrollable) {
@@ -239,17 +258,17 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 								String name = stack.getHoverName().getString();
 				if (name.length() > 18) name = name.substring(0, 17) + "…";
 				graphics.text(this.font, Component.literal(name),
-						30, y + 3, 0xFF404040, false);
+						30, y + 3, 0xFFE0E0E0, true);
 
 				graphics.text(this.font, Component.literal(
 						formatElapsed(this.menu.requestergolems$getActiveRequestElapsedTicks(index))),
-					100, y + 3, 0xFF404040, false);
+					100, y + 3, 0xFFB0B0B0, false);
 
 				int delivered = this.menu.requestergolems$getActiveRequestOriginalCount(index)
 						- this.menu.requestergolems$getActiveRequestRemainingCount(index);
 				graphics.text(this.font, Component.literal(
 						delivered + "/" + this.menu.requestergolems$getActiveRequestOriginalCount(index)),
-						136, y + 3, 0xFF404040, false);
+						136, y + 3, 0xFFB0B0B0, false);
 			}
 
 			return;
