@@ -241,13 +241,14 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				256
 		);
 
-		// Vanilla-style dark outer edge around the request viewport.
+		// Keep the request viewport uniformly black. The previous lighter outer
+		// fill left four tiny gray corner squares visible around the viewport.
 		graphics.fill(
 				this.leftPos + 4,
 				this.topPos + SETTINGS_LIST_TOP - 4,
 				this.leftPos + this.imageWidth - 4,
 				this.topPos + SETTINGS_LIST_BOTTOM + 4,
-				0xFF373737
+				0xFF111111
 		);
 		graphics.fill(
 				this.leftPos + 6,
