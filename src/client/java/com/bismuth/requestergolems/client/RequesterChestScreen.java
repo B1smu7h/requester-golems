@@ -22,8 +22,8 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	private static final int SETTINGS_LIST_BOTTOM = 88;
 	private static final int SETTINGS_ROW_HEIGHT = 20;
 	private static final int SETTINGS_VISIBLE_ROWS = 3;
-	private static final int SETTINGS_SCROLLBAR_X = 168;
-	private static final int SETTINGS_SCROLLBAR_WIDTH = 5;
+	private static final int SETTINGS_SCROLLBAR_X = 167;
+	private static final int SETTINGS_SCROLLBAR_WIDTH = 6;
 
 	private boolean settingsMode;
 	private int scrollOffset;
@@ -282,13 +282,24 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			);
 		}
 
-		// A narrow vanilla-like scrollbar lives inside the right edge of the viewport.
+		// A small beveled scrollbar, using the same light/dark edge treatment
+		// as vanilla Minecraft's GUI controls instead of a flat-color strip.
+		final int scrollbarX = this.leftPos + SETTINGS_SCROLLBAR_X;
+		final int scrollbarTop = this.topPos + SETTINGS_LIST_TOP;
+		final int scrollbarBottom = this.topPos + SETTINGS_LIST_BOTTOM;
 		graphics.fill(
-				this.leftPos + SETTINGS_SCROLLBAR_X,
-				this.topPos + SETTINGS_LIST_TOP,
-				this.leftPos + SETTINGS_SCROLLBAR_X + SETTINGS_SCROLLBAR_WIDTH,
-				this.topPos + SETTINGS_LIST_BOTTOM,
-				0xFF202020
+				scrollbarX,
+				scrollbarTop,
+				scrollbarX + SETTINGS_SCROLLBAR_WIDTH,
+				scrollbarBottom,
+				0xFF373737
+		);
+		graphics.fill(
+				scrollbarX + 1,
+				scrollbarTop,
+				scrollbarX + SETTINGS_SCROLLBAR_WIDTH - 1,
+				scrollbarBottom,
+				0xFF1B1B1B
 		);
 
 		if (scrollable) {
@@ -297,12 +308,39 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			int maxScroll = count - SETTINGS_VISIBLE_ROWS;
 			int thumbY = SETTINGS_LIST_TOP
 					+ (trackHeight - thumbHeight) * this.scrollOffset / maxScroll;
+			int thumbX = this.leftPos + SETTINGS_SCROLLBAR_X;
+			int thumbBottom = this.topPos + thumbY + thumbHeight;
+
+			// Dark outer edge.
 			graphics.fill(
-					this.leftPos + SETTINGS_SCROLLBAR_X,
+					thumbX,
 					this.topPos + thumbY,
-					this.leftPos + SETTINGS_SCROLLBAR_X + SETTINGS_SCROLLBAR_WIDTH,
-					this.topPos + thumbY + thumbHeight,
-					0xFFC0C0C0
+					thumbX + SETTINGS_SCROLLBAR_WIDTH,
+					thumbBottom,
+					0xFF303030
+			);
+			// Main metal/stone face.
+			graphics.fill(
+					thumbX + 1,
+					this.topPos + thumbY + 1,
+					thumbX + SETTINGS_SCROLLBAR_WIDTH - 1,
+					thumbBottom - 1,
+					0xFF8B8B8B
+			);
+			// Raised top/left highlight and recessed bottom/right edge.
+			graphics.fill(
+					thumbX + 1,
+					this.topPos + thumbY + 1,
+					thumbX + SETTINGS_SCROLLBAR_WIDTH - 1,
+					this.topPos + thumbY + 2,
+					0xFFC6C6C6
+			);
+			graphics.fill(
+					thumbX + 1,
+					thumbBottom - 2,
+					thumbX + SETTINGS_SCROLLBAR_WIDTH - 1,
+					thumbBottom - 1,
+					0xFF555555
 			);
 		}
 	}
