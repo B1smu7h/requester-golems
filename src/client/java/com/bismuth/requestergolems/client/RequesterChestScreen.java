@@ -235,6 +235,16 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				256,
 				256
 		);
+		// The texture's final row is transparent in the middle, which can leave
+		// a one-pixel straight gap beneath this custom-height panel. Seal that
+		// last row so the frame meets the screen cleanly.
+		graphics.fill(
+				this.leftPos,
+				this.topPos + this.imageHeight - 1,
+				this.leftPos + this.imageWidth,
+				this.topPos + this.imageHeight,
+				0xFF373737
+		);
 
 		// Four gray pixels of breathing room around the black request viewport,
 		// matching the earlier version that looked right.
@@ -350,7 +360,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		if (this.settingsMode) {
 			Component title = Component.translatable("container.requestergolems.active_requests");
 			graphics.text(this.font, title,
-					8, 8, 0xFF404040, false);
+					8, 20, 0xFF404040, false);
 
 			int count = this.menu.requestergolems$getActiveRequestCount();
 			for (int visible = 0; visible < SETTINGS_VISIBLE_ROWS; visible++) {
