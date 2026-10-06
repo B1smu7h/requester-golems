@@ -195,59 +195,47 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				256
 		);
 
-		// Extend the vanilla container's beveled frame down the sides.
-		// The source strip is the same side-wall texture used by the main screen.
-		for (int y = 17; y < this.imageHeight - 7; y += 43) {
-			int height = Math.min(43, this.imageHeight - 7 - y);
-			graphics.blit(
-					RenderPipelines.GUI_TEXTURED,
-					CONTAINER_TEXTURE,
-					this.leftPos,
-					this.topPos + y,
-					0,
-					17,
-					7,
-					height,
-					256,
-					256
-			);
-			graphics.blit(
-					RenderPipelines.GUI_TEXTURED,
-					CONTAINER_TEXTURE,
-					this.leftPos + this.imageWidth - 7,
-					this.topPos + y,
-					169,
-					17,
-					7,
-					height,
-					256,
-					256
-			);
-		}
+		// Extend the vanilla container side walls through the custom request area.
+		// The lower 96px are then taken directly from the vanilla generic_54
+		// texture, exactly like the main requester chest screen.
+		graphics.blit(
+				RenderPipelines.GUI_TEXTURED,
+				CONTAINER_TEXTURE,
+				this.leftPos,
+				this.topPos + 17,
+				0,
+				17,
+				7,
+				97,
+				256,
+				256
+		);
+		graphics.blit(
+				RenderPipelines.GUI_TEXTURED,
+				CONTAINER_TEXTURE,
+				this.leftPos + this.imageWidth - 7,
+				this.topPos + 17,
+				169,
+				17,
+				7,
+				97,
+				256,
+				256
+		);
 
-		// Finish the bottom edge as one continuous frame. Drawing across the
-		// full width also covers the side-wall corner pixels, avoiding the
-		// stray light/red corner artifact from the repeated texture strip.
-		graphics.fill(
+		// Exact vanilla lower container section: this supplies the real bottom
+		// corners and bottom border instead of approximating them with fills.
+		graphics.blit(
+				RenderPipelines.GUI_TEXTURED,
+				CONTAINER_TEXTURE,
 				this.leftPos,
-				this.topPos + this.imageHeight - 7,
-				this.leftPos + this.imageWidth,
-				this.topPos + this.imageHeight - 6,
-				0xFF8B8B8B
-		);
-		graphics.fill(
-				this.leftPos,
-				this.topPos + this.imageHeight - 6,
-				this.leftPos + this.imageWidth,
-				this.topPos + this.imageHeight - 1,
-				0xFF555555
-		);
-		graphics.fill(
-				this.leftPos,
-				this.topPos + this.imageHeight - 1,
-				this.leftPos + this.imageWidth,
-				this.topPos + this.imageHeight,
-				0xFF373737
+				this.topPos + 114,
+				0,
+				126,
+				this.imageWidth,
+				96,
+				256,
+				256
 		);
 
 		// Vanilla-style dark outer edge around the request viewport.
