@@ -130,7 +130,7 @@ public class RequesterChestMenu extends ChestMenu {
 			int visible = slot - first;
 			int x = visible >= 0 && visible < SETTINGS_VISIBLE_COUNT ? 8 : -1000;
 			int y = visible >= 0 && visible < SETTINGS_VISIBLE_COUNT
-					? 28 + visible * 20
+					? 20 + visible * 20
 					: -1000;
 
 			Slot replacement = new Slot(this.activeRequestContainer, slot, x, y);
