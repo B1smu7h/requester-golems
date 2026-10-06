@@ -235,16 +235,6 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				256,
 				256
 		);
-		// The custom panel ends immediately after the declared image height.
-		// Close the frame one pixel beyond that boundary so the world cannot
-		// show through as a straight line underneath the bottom border.
-		graphics.fill(
-				this.leftPos,
-				this.topPos + this.imageHeight,
-				this.leftPos + this.imageWidth,
-				this.topPos + this.imageHeight + 1,
-				0xFF373737
-		);
 
 		// Four gray pixels of breathing room around the black request viewport,
 		// matching the earlier version that looked right.
