@@ -94,10 +94,6 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			this.reset();
 			return;
 		}
-		System.out.println("[RG DEBUG] START job=" + this.job.id()
-				+ " request=" + this.job.requestId()
-				+ " requester=" + this.requesterChestPos
-				+ " requested=" + this.job.stack());
 
 		if (this.job.state() == RequesterJob.State.CANCELLED) {
 			if (this.carrying) {
@@ -201,9 +197,6 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 			if (this.interactionPhase == InteractionPhase.NONE) {
 				this.interactionPhase = InteractionPhase.PICKING_UP;
-				System.out.println("[RG DEBUG] PICKUP_BEGIN job=" + this.job.id()
-						+ " source=" + this.sourceChestPos
-						+ " requested=" + this.job.stack());
 				body.getNavigation().stop();
 				this.interactionTicks = TARGET_INTERACTION_TICKS;
 				body.setState(CopperGolemState.GETTING_ITEM);
@@ -230,12 +223,6 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 				int amount = Math.min(this.job.stack().getCount(), Math.min(16, available));
 				ItemStack picked = removeMatching(source, this.job.stack(), amount);
-				System.out.println("[RG DEBUG] PICKUP_RESULT job=" + this.job.id()
-						+ " matching=" + countMatching(source, this.job.stack())
-						+ " availableBefore=" + available
-						+ " amount=" + amount
-						+ " picked=" + picked
-						+ " handBefore=" + body.getMainHandItem());
 				source.stopOpen(body);
 				body.clearOpenedChestPos();
 				this.interactionPhase = InteractionPhase.NONE;
@@ -249,9 +236,6 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				}
 
 				body.setItemSlot(EquipmentSlot.MAINHAND, picked);
-				System.out.println("[RG DEBUG] CARRYING job=" + this.job.id()
-						+ " hand=" + body.getMainHandItem()
-						+ " rollbackSource=" + this.sourceChestPos);
 				body.setState(CopperGolemState.IDLE);
 				this.carrying = true;
 				body.getNavigation().moveTo(
@@ -365,12 +349,6 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		}
 
 		if (this.carrying) {
-			System.out.println("[RG DEBUG] STOP job=" + (this.job == null ? "null" : this.job.id())
-					+ " carrying=" + this.carrying
-					+ " hand=" + body.getMainHandItem()
-					+ " phase=" + this.interactionPhase
-					+ " source=" + this.sourceChestPos
-					+ " requester=" + this.requesterChestPos);
 			if (body instanceof RequesterGolemAccess rollbackAccess) {
 				rollbackAccess.requestergolems$setRollbackSource(this.sourceChestPos);
 			}
@@ -439,35 +417,6 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 					|| !requester.requestergolems$hasActiveRequests()) {
 				continue;
 			}
-
-			double distance = body.position().distanceToSqr(Vec3.atCenterOf(pos));
-			if (distance < bestDistance) {
-				bestDistance = distance;
-				best = pos.immutable();
-			}
-		}
-
-		return best;
-	}
-
-	private BlockPos findSourceChest(ServerLevel level, CopperGolem body, ItemStack requested) {
-		BlockPos best = null;
-		double bestDistance = Double.MAX_VALUE;
-		BlockPos center = this.requesterChestPos != null ? this.requesterChestPos : body.blockPosition();
-
-		for (BlockPos pos : BlockPos.betweenClosed(
-				center.offset(-REQUEST_RANGE_HORIZONTAL, -REQUEST_RANGE_VERTICAL, -REQUEST_RANGE_HORIZONTAL),
-				center.offset(REQUEST_RANGE_HORIZONTAL, REQUEST_RANGE_VERTICAL, REQUEST_RANGE_HORIZONTAL))) {
-			BlockEntity entity = level.getBlockEntity(pos);
-			if (!(entity instanceof ChestBlockEntity)) continue;
-			if (this.inspectedSourceChests.contains(pos)) continue;
-
-			var state = level.getBlockState(pos);
-			if (!(state.getBlock() instanceof ChestBlock) || state.getBlock() instanceof CopperChestBlock) continue;
-			if (entity instanceof RequesterChestAccess requester && requester.requestergolems$isRequester()) continue;
-
-			Container container = getContainer(level, pos, false);
-			if (container == null || countMatching(container, requested) <= 1) continue;
 
 			double distance = body.position().distanceToSqr(Vec3.atCenterOf(pos));
 			if (distance < bestDistance) {
@@ -655,13 +604,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		if (--this.interactionTicks > 0) return;
 
 		ItemStack carried = body.getMainHandItem();
-		System.out.println("[RG DEBUG] ROLLBACK source=" + this.sourceChestPos
-				+ " handBefore=" + carried
-				+ " job=" + (this.job == null ? "null" : this.job.id()));
 		ItemStack remainder = insertIntoContainer(source, carried.copy());
-		System.out.println("[RG DEBUG] ROLLBACK_RESULT source=" + this.sourceChestPos
-				+ " remainder=" + remainder
-				+ " handAfterBeforeSet=" + body.getMainHandItem());
 		source.stopOpen(body);
 		body.clearOpenedChestPos();
 
