@@ -9,6 +9,9 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.animal.golem.CopperGolem;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
@@ -155,6 +158,25 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 			this.requestergolems$rollbackSource = null;
 			golem.getNavigation().stop();
 		}
+	}
+
+	@Inject(method = "dropAllDeathLoot", at = @At("HEAD"))
+	private void requestergolems$dropCarriedItemOnDeath(
+			ServerLevel level,
+			DamageSource source,
+			CallbackInfo ci
+	) {
+		if (!this.requestergolems$requester) return;
+
+		CopperGolem golem = (CopperGolem) (Object) this;
+		ItemStack carried = golem.getItemBySlot(EquipmentSlot.MAINHAND);
+		if (carried.isEmpty()) return;
+
+		// Requester transport uses the vanilla main hand as its cargo slot. Make
+		// that cargo an explicit death drop before Copper Golem's normal equipment
+		// drop hook runs, then clear the slot so vanilla cannot drop it twice.
+		golem.spawnAtLocation(level, carried.copy());
+		golem.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
 	}
 
 	@Inject(method = "mobInteract", at = @At("HEAD"), cancellable = true)
