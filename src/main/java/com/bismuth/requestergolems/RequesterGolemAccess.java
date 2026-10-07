@@ -1,5 +1,6 @@
 package com.bismuth.requestergolems;
 
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 
 /**
@@ -17,4 +18,8 @@ public interface RequesterGolemAccess {
 	BlockPos requestergolems$getRollbackSource();
 	void requestergolems$setRollbackSource(BlockPos source);
 	void requestergolems$clearRollbackSource();
+	UUID requestergolems$getRecoveryJobId();
+	BlockPos requestergolems$getRecoveryRequesterPos();
+	void requestergolems$setRecoveryState(UUID jobId, BlockPos requesterPos);
+	void requestergolems$clearRecoveryState();
 }
