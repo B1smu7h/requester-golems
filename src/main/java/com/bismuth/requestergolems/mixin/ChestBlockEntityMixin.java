@@ -42,6 +42,10 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	private static final String ACTIVE_JOB_ITEM_PREFIX = "requestergolems:active_job_item_";
 	private static final String ACTIVE_JOB_ORIGINAL_COUNT_PREFIX = "requestergolems:active_job_original_count_";
 	private static final String ACTIVE_JOB_FAILURES_PREFIX = "requestergolems:active_job_failures_";
+	private static final String ACTIVE_JOB_STATE_PREFIX = "requestergolems:active_job_state_";
+	private static final String ACTIVE_JOB_SOURCE_X_PREFIX = "requestergolems:active_job_source_x_";
+	private static final String ACTIVE_JOB_SOURCE_Y_PREFIX = "requestergolems:active_job_source_y_";
+	private static final String ACTIVE_JOB_SOURCE_Z_PREFIX = "requestergolems:active_job_source_z_";
 
 	private static final String REDSTONE_KEY = "requestergolems:redstone_powered";
 
@@ -177,9 +181,14 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 				request -> request.id().equals(requestId)
 		);
 		if (removed) {
-			this.requestergolems$activeJobs().removeIf(
-					job -> job.requestId().equals(requestId)
-			);
+			this.requestergolems$activeJobs().removeIf(job -> {
+				if (!job.requestId().equals(requestId)) return false;
+				if (job.state() == RequesterJob.State.IN_PROGRESS) {
+					job.setState(RequesterJob.State.CANCELLED);
+					return false;
+				}
+				return true;
+			});
 			this.requestergolems$chest().setChanged();
 		}
 		return removed;
@@ -464,22 +473,33 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 				UUID requestId = UUID.fromString(requestIdString);
 				if (!this.requestergolems$isRequestActive(requestId)) continue;
 
-				this.requestergolems$activeJobs().add(
-						new RequesterJob(
-								jobId,
-								requestId,
-								stack,
-								input.getIntOr(
-										ACTIVE_JOB_ORIGINAL_COUNT_PREFIX + index,
-										stack.getCount()
-								),
-								input.getIntOr(
-										ACTIVE_JOB_FAILURES_PREFIX + index,
-										0
-								),
-								RequesterJob.State.WAITING
-						)
+				String stateName = input.getStringOr(ACTIVE_JOB_STATE_PREFIX + index, RequesterJob.State.WAITING.name());
+				RequesterJob.State state;
+				try {
+					state = RequesterJob.State.valueOf(stateName);
+				} catch (IllegalArgumentException ignored) {
+					state = RequesterJob.State.WAITING;
+				}
+				BlockPos sourcePos = null;
+				if (input.contains(ACTIVE_JOB_SOURCE_X_PREFIX + index)
+						&& input.contains(ACTIVE_JOB_SOURCE_Y_PREFIX + index)
+						&& input.contains(ACTIVE_JOB_SOURCE_Z_PREFIX + index)) {
+					sourcePos = new BlockPos(
+							input.getIntOr(ACTIVE_JOB_SOURCE_X_PREFIX + index, 0),
+							input.getIntOr(ACTIVE_JOB_SOURCE_Y_PREFIX + index, 0),
+							input.getIntOr(ACTIVE_JOB_SOURCE_Z_PREFIX + index, 0)
+					);
+				}
+				RequesterJob loadedJob = new RequesterJob(
+						jobId,
+						requestId,
+						stack,
+						input.getIntOr(ACTIVE_JOB_ORIGINAL_COUNT_PREFIX + index, stack.getCount()),
+						input.getIntOr(ACTIVE_JOB_FAILURES_PREFIX + index, 0),
+						state,
+						sourcePos
 				);
+				this.requestergolems$activeJobs().add(loadedJob);
 			} catch (IllegalArgumentException ignored) {
 				// Ignore malformed job IDs rather than failing the chest load.
 			}
