@@ -268,7 +268,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 					// must NOT be armed here: CopperGolemMixin uses that flag for an
 					// emergency physical return, and this golem is currently carrying
 					// an active job toward the requester chest.
-					access.requestergolems$setRecoveryState(this.job.id(), this.requesterChestPos);
+					access.requestergolems$setRecoveryState(this.job.id(), this.requesterChestPos, this.sourceChestPos);
 				}
 				body.getNavigation().moveTo(
 						this.requesterChestPos.getX() + 0.5,
