@@ -655,6 +655,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		this.carrying = !remainder.isEmpty();
 		if (body instanceof RequesterGolemAccess rollbackAccess && remainder.isEmpty()) {
 			rollbackAccess.requestergolems$clearRollbackSource();
+			rollbackAccess.requestergolems$clearRecoveryState();
 		}
 
 		if (this.carrying) {
@@ -686,6 +687,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 		if (body instanceof RequesterGolemAccess rollbackAccess) {
 			rollbackAccess.requestergolems$clearRollbackSource();
+			rollbackAccess.requestergolems$clearRecoveryState();
 		}
 
 		this.reset();
@@ -709,7 +711,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 		for (RequesterJob candidate : requester.requestergolems$getActiveJobs()) {
 			if (candidate.id().equals(recoveryJobId)) {
-				requester.requestergolems$returnJob(candidate);
+				requester.requestergolems$recoverJob(recoveryJobId);
 				break;
 			}
 		}
