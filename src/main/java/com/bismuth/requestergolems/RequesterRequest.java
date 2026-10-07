@@ -11,11 +11,13 @@ import net.minecraft.world.item.ItemStack;
  * one logical request even when several golems are transporting it.</p>
  */
 public final class RequesterRequest {
+	public enum State { ACTIVE, CANCELLING }
 	private final UUID id;
 	private final ItemStack requestedItem;
 	private final int originalCount;
 	private int remainingCount;
 	private final long createdAt;
+	private State state;
 
 	public RequesterRequest(
 			UUID id,
@@ -29,6 +31,7 @@ public final class RequesterRequest {
 		this.originalCount = Math.max(0, originalCount);
 		this.remainingCount = Math.max(0, Math.min(this.originalCount, remainingCount));
 		this.createdAt = createdAt;
+		this.state = State.ACTIVE;
 	}
 
 	public static RequesterRequest create(ItemStack request, long createdAt) {
@@ -64,6 +67,14 @@ public final class RequesterRequest {
 	public long createdAt() {
 		return this.createdAt;
 	}
+
+	public State state() { return this.state; }
+
+	public void setState(State state) { this.state = state == null ? State.ACTIVE : state; }
+
+	public boolean isActive() { return this.state == State.ACTIVE && !this.isComplete(); }
+
+	public boolean isCancelling() { return this.state == State.CANCELLING; }
 
 	public boolean isComplete() {
 		return this.remainingCount <= 0;
