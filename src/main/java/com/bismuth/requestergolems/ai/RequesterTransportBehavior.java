@@ -233,6 +233,9 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				}
 
 				body.setItemSlot(EquipmentSlot.MAINHAND, picked);
+				if (body instanceof RequesterGolemAccess rollbackAccess) {
+					rollbackAccess.requestergolems$setRollbackSource(this.sourceChestPos);
+				}
 				body.setState(CopperGolemState.IDLE);
 				this.carrying = true;
 				body.getNavigation().moveTo(
@@ -346,6 +349,9 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		}
 
 		if (this.carrying) {
+			if (body instanceof RequesterGolemAccess rollbackAccess) {
+				rollbackAccess.requestergolems$setRollbackSource(this.sourceChestPos);
+			}
 			this.beginReturnToSource(level, body, false);
 			return;
 		}
@@ -631,6 +637,9 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 		body.setItemSlot(EquipmentSlot.MAINHAND, remainder);
 		this.carrying = !remainder.isEmpty();
+		if (body instanceof RequesterGolemAccess rollbackAccess && remainder.isEmpty()) {
+			rollbackAccess.requestergolems$clearRollbackSource();
+		}
 
 		if (this.carrying) {
 			// The source is unexpectedly full. Keep trying physically rather than
