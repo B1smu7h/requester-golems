@@ -226,8 +226,11 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		Container requester = getContainer(level, this.requesterChestPos, true);
 		ItemStack carried = body.getMainHandItem();
 		if (requester == null || carried.isEmpty()) {
-			this.returnCarriedToSource(level, body);
-			this.returnJob(level);
+			if (!carried.isEmpty()) {
+				this.beginReturnToSource(level, body, false);
+			} else {
+				this.returnJob(level);
+			}
 			return;
 		}
 
