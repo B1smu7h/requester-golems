@@ -132,15 +132,22 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 		if (this.job != null) {
 			BlockEntity jobChestEntity = level.getBlockEntity(this.requesterChestPos);
-			if (!(jobChestEntity instanceof RequesterChestAccess jobChest)
-					|| !jobChest.requestergolems$isJobActive(this.job.id())
-					|| !jobChest.requestergolems$isRequestActive(this.job.requestId())) {
+			if (!(jobChestEntity instanceof RequesterChestAccess jobChest)) {
+				if (this.carrying) this.beginReturnToSource(level, body, false);
+				else this.reset();
+				return;
+			}
+			if (this.job.state() != RequesterJob.State.CANCELLED
+					&& (!jobChest.requestergolems$isJobActive(this.job.id())
+							|| !jobChest.requestergolems$isRequestActive(this.job.requestId()))) {
 				this.job = null;
-				if (this.carrying) {
-					this.beginReturnToSource(level, body, false);
-				} else {
-					this.reset();
-				}
+				if (this.carrying) this.beginReturnToSource(level, body, false);
+				else this.reset();
+				return;
+			}
+			if (this.job.state() == RequesterJob.State.CANCELLED && !this.carrying) {
+				jobChest.requestergolems$cancelJob(this.job.id());
+				this.reset();
 				return;
 			}
 		}
