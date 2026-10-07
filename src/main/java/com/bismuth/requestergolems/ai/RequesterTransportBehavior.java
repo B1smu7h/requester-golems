@@ -41,7 +41,8 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	private enum InteractionPhase {
 		NONE,
 		PICKING_UP,
-		DROPPING_OFF
+		DROPPING_OFF,
+		RETURNING_TO_SOURCE
 	}
 
 	public RequesterTransportBehavior() {
@@ -79,9 +80,13 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 		this.sourceChestPos = this.findSourceChest(level, body, this.job.stack());
 		if (this.sourceChestPos == null) {
-			requesterChest.requestergolems$returnJob(this.job);
-			this.reset();
-			this.retryCooldownTicks = RETRY_COOLDOWN_TICKS;
+			// No matching source was found. Pick a real chest to inspect so an
+			// empty source is an actual failed attempt rather than an
+			// omniscient "nothing exists" result.
+			this.sourceChestPos = this.findSourceChestToInspect(level, body);
+		}
+		if (this.sourceChestPos == null) {
+			this.failAndRetry(level, body);
 			return;
 		}
 
@@ -103,24 +108,33 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			if (!(jobChestEntity instanceof RequesterChestAccess jobChest)
 					|| !jobChest.requestergolems$isJobActive(this.job.id())
 					|| !jobChest.requestergolems$isRequestActive(this.job.requestId())) {
-				this.returnCarriedToSource(level, body);
 				this.job = null;
-				this.carrying = !body.getMainHandItem().isEmpty();
-				if (!this.carrying) this.reset();
+				if (this.carrying) {
+					this.beginReturnToSource(level, body, false);
+				} else {
+					this.reset();
+				}
 				return;
 			}
 		}
 
 		// A cancellation can remove the job while the golem is still carrying
-		// items. Finish the rollback path without ever dereferencing a null job.
+		// items. Finish the rollback path physically, without teleporting the
+		// carried stack back into the source.
+		if (this.job == null && this.carrying) {
+			if (this.interactionPhase != InteractionPhase.RETURNING_TO_SOURCE) {
+				this.beginReturnToSource(level, body, false);
+			}
+			return;
+		}
+
+		if (this.interactionPhase == InteractionPhase.RETURNING_TO_SOURCE) {
+			this.tickReturnToSource(level, body);
+			return;
+		}
+
 		if (this.job == null) {
-			if (this.carrying) {
-				this.returnCarriedToSource(level, body);
-				this.carrying = !body.getMainHandItem().isEmpty();
-			}
-			if (!this.carrying) {
-				this.reset();
-			}
+			this.reset();
 			return;
 		}
 
@@ -257,13 +271,19 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		this.carrying = !remainder.isEmpty();
 
 		if (this.job.isComplete()) {
-			if (!this.carrying) {
+			if (this.carrying) {
+				// The request is complete, but the destination could only accept
+				// part of the carried stack. Return the unused remainder physically.
+				this.job = null;
+				this.beginReturnToSource(level, body, false);
+			} else {
 				this.reset();
 			}
 		} else if (!this.carrying) {
-			// Partial source fulfillment: put the remaining quantity back
-			// into the requester chest job queue.
-			this.failAndRetry(level, body);
+			// A partial delivery is still a successful attempt. Requeue only
+			// the remaining quantity; do not increment the failure streak.
+			this.returnJob(level);
+			this.reset();
 		}
 	}
 
@@ -277,8 +297,11 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			}
 			body.clearOpenedChestPos();
 		}
-		if (this.carrying) {
-			this.returnCarriedToSource(level, body);
+		if (this.carrying && this.interactionPhase != InteractionPhase.RETURNING_TO_SOURCE) {
+			// Preserve the physical rollback state. The next activation will
+			// continue the return trip instead of mutating the source remotely.
+			this.beginReturnToSource(level, body, false);
+			return;
 		}
 		if (this.job != null) {
 			this.returnJob(level);
@@ -360,6 +383,31 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 			Container container = getContainer(level, pos, false);
 			if (container == null || countMatching(container, requested) <= 1) continue;
+
+			double distance = body.position().distanceToSqr(Vec3.atCenterOf(pos));
+			if (distance < bestDistance) {
+				bestDistance = distance;
+				best = pos.immutable();
+			}
+		}
+
+		return best;
+	}
+
+	private BlockPos findSourceChestToInspect(ServerLevel level, CopperGolem body) {
+		BlockPos best = null;
+		double bestDistance = Double.MAX_VALUE;
+		BlockPos center = this.requesterChestPos != null ? this.requesterChestPos : body.blockPosition();
+
+		for (BlockPos pos : BlockPos.betweenClosed(
+				center.offset(-REQUEST_RANGE_HORIZONTAL, -REQUEST_RANGE_VERTICAL, -REQUEST_RANGE_HORIZONTAL),
+				center.offset(REQUEST_RANGE_HORIZONTAL, REQUEST_RANGE_VERTICAL, REQUEST_RANGE_HORIZONTAL))) {
+			BlockEntity entity = level.getBlockEntity(pos);
+			if (!(entity instanceof ChestBlockEntity)) continue;
+
+			var state = level.getBlockState(pos);
+			if (!(state.getBlock() instanceof ChestBlock) || state.getBlock() instanceof CopperChestBlock) continue;
+			if (entity instanceof RequesterChestAccess requester && requester.requestergolems$isRequester()) continue;
 
 			double distance = body.position().distanceToSqr(Vec3.atCenterOf(pos));
 			if (distance < bestDistance) {
@@ -467,34 +515,123 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		return stack;
 	}
 
-	private void returnCarriedToSource(ServerLevel level, CopperGolem body) {
-		ItemStack carried = body.getMainHandItem();
-		if (carried.isEmpty() || this.sourceChestPos == null) return;
-
-		Container source = getContainer(level, this.sourceChestPos, false);
-		if (source != null) {
-			ItemStack remainder = insertIntoContainer(source, carried.copy());
-			body.setItemSlot(EquipmentSlot.MAINHAND, remainder);
+	private void beginReturnToSource(ServerLevel level, CopperGolem body, boolean cancelJobAfterReturn) {
+		if (!this.carrying || body.getMainHandItem().isEmpty() || this.sourceChestPos == null) {
+			if (cancelJobAfterReturn && this.job != null) {
+				BlockEntity entity = level.getBlockEntity(this.requesterChestPos);
+				if (entity instanceof RequesterChestAccess requester) {
+					requester.requestergolems$cancelJob(this.job.id());
+				}
+			}
+			this.job = null;
+			this.reset();
+			return;
 		}
+
+		this.interactionPhase = InteractionPhase.RETURNING_TO_SOURCE;
+		this.interactionTicks = 0;
+		body.setState(CopperGolemState.IDLE);
+		this.moveToContainer(level, body, this.sourceChestPos);
 	}
 
-	private void failAndRetry(ServerLevel level, CopperGolem body) {
+	private void tickReturnToSource(ServerLevel level, CopperGolem body) {
+		if (!this.carrying || body.getMainHandItem().isEmpty()) {
+			this.finishReturnToSource(level, body);
+			return;
+		}
+
+		if (this.sourceChestPos == null) {
+			// There is nowhere safe to put the item yet. Keep the item in the
+			// golem's hand rather than mutating storage from a distance.
+			return;
+		}
+
+		if (!this.isInContainerInteractionRange(level, body, this.sourceChestPos)) {
+			this.moveToContainer(level, body, this.sourceChestPos);
+			return;
+		}
+
+		Container source = getContainer(level, this.sourceChestPos, false);
+		if (source == null) {
+			this.moveToContainer(level, body, this.sourceChestPos);
+			return;
+		}
+
+		if (this.interactionPhase == InteractionPhase.RETURNING_TO_SOURCE && this.interactionTicks == 0) {
+			body.getNavigation().stop();
+			this.interactionTicks = TARGET_INTERACTION_TICKS;
+			body.setState(CopperGolemState.DROPPING_ITEM);
+			body.setOpenedChestPos(this.sourceChestPos);
+			source.startOpen(body);
+			return;
+		}
+
+		if (--this.interactionTicks > 0) return;
+
+		ItemStack carried = body.getMainHandItem();
+		ItemStack remainder = insertIntoContainer(source, carried.copy());
+		source.stopOpen(body);
+		body.clearOpenedChestPos();
+
+		body.setItemSlot(EquipmentSlot.MAINHAND, remainder);
+		this.carrying = !remainder.isEmpty();
+
+		if (this.carrying) {
+			// The source is unexpectedly full. Keep trying physically rather than
+			// teleporting the item or silently deleting it.
+			this.interactionTicks = 0;
+			this.moveToContainer(level, body, this.sourceChestPos);
+			return;
+		}
+
+		this.finishReturnToSource(level, body);
+	}
+
+	private void finishReturnToSource(ServerLevel level, CopperGolem body) {
+		this.interactionPhase = InteractionPhase.NONE;
+		this.interactionTicks = 0;
+		body.clearOpenedChestPos();
+
 		if (this.job == null) {
 			this.reset();
 			return;
 		}
 
+		int failures = this.job.consecutiveFailures();
+		if (failures >= MAX_CONSECUTIVE_FAILURES) {
+			BlockEntity entity = level.getBlockEntity(this.requesterChestPos);
+			if (entity instanceof RequesterChestAccess requester) {
+				requester.requestergolems$cancelJob(this.job.id());
+			}
+			this.reset();
+			return;
+		}
+
+		this.returnJob(level);
+		this.reset();
+		this.retryCooldownTicks = RETRY_COOLDOWN_TICKS;
+	}
+
+	private void failAndRetry(ServerLevel level, CopperGolem body) {
+		if (this.job == null) {
+			if (this.carrying) {
+				this.beginReturnToSource(level, body, false);
+			} else {
+				this.reset();
+			}
+			return;
+		}
+
 		int consecutiveFailures = this.job.recordConsecutiveFailure();
 
-		// Roll back carried items before clearing the active job state.
 		if (this.carrying) {
-			this.returnCarriedToSource(level, body);
-			this.carrying = !body.getMainHandItem().isEmpty();
+			// Do not put the item back by directly mutating the source. The golem
+			// must physically travel back and deposit it before the attempt ends.
+			this.beginReturnToSource(level, body, consecutiveFailures >= MAX_CONSECUTIVE_FAILURES);
+			return;
 		}
 
 		if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-			// Three explicit zero-progress attempts terminate this job rather than
-			// allowing it to bounce between requester golems forever.
 			BlockEntity entity = level.getBlockEntity(this.requesterChestPos);
 			if (entity instanceof RequesterChestAccess requester) {
 				requester.requestergolems$cancelJob(this.job.id());
