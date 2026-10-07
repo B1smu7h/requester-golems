@@ -160,13 +160,13 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	@Override
 	public boolean requestergolems$hasActiveRequests() {
 		return this.requestergolems$activeRequests().stream()
-				.anyMatch(request -> !request.isComplete());
+				.anyMatch(RequesterRequest::isActive);
 	}
 
 	@Override
 	public List<RequesterRequest> requestergolems$getActiveRequests() {
 		return this.requestergolems$activeRequests().stream()
-				.filter(request -> !request.isComplete())
+				.filter(RequesterRequest::isActive)
 				.map(RequesterRequest::copy)
 				.toList();
 	}
@@ -174,26 +174,48 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	@Override
 	public boolean requestergolems$isRequestActive(UUID requestId) {
 		return this.requestergolems$activeRequests().stream()
-				.anyMatch(request -> request.id().equals(requestId) && !request.isComplete());
+				.anyMatch(request -> request.id().equals(requestId) && request.isActive());
+	}
+
+	@Override
+	public boolean requestergolems$isRequestCancelling(UUID requestId) {
+		return this.requestergolems$activeRequests().stream()
+				.anyMatch(request -> request.id().equals(requestId) && request.isCancelling());
 	}
 
 	@Override
 	public boolean requestergolems$cancelRequest(UUID requestId) {
-		boolean removed = this.requestergolems$activeRequests().removeIf(
-				request -> request.id().equals(requestId)
+		RequesterRequest request = this.requestergolems$activeRequests().stream()
+				.filter(existing -> existing.id().equals(requestId))
+				.findFirst()
+				.orElse(null);
+		if (request == null || request.isCancelling()) return false;
+
+		request.setState(RequesterRequest.State.CANCELLING);
+		this.requestergolems$activeJobs().removeIf(job -> {
+			if (!job.requestId().equals(requestId)) return false;
+			if (job.state() == RequesterJob.State.IN_PROGRESS) {
+				job.setState(RequesterJob.State.CANCELLED);
+				return false;
+			}
+			return true;
+		});
+
+		this.requestergolems$finalizeCancelledRequest(requestId);
+		this.requestergolems$chest().setChanged();
+		return true;
+	}
+
+	@Override
+	public void requestergolems$finalizeCancelledRequest(UUID requestId) {
+		boolean hasJobs = this.requestergolems$activeJobs().stream()
+				.anyMatch(job -> job.requestId().equals(requestId));
+		if (hasJobs) return;
+
+		this.requestergolems$activeRequests().removeIf(
+				request -> request.id().equals(requestId) && request.isCancelling()
 		);
-		if (removed) {
-			this.requestergolems$activeJobs().removeIf(job -> {
-				if (!job.requestId().equals(requestId)) return false;
-				if (job.state() == RequesterJob.State.IN_PROGRESS) {
-					job.setState(RequesterJob.State.CANCELLED);
-					return false;
-				}
-				return true;
-			});
-			this.requestergolems$chest().setChanged();
-		}
-		return removed;
+		this.requestergolems$chest().setChanged();
 	}
 
 	@Override
@@ -381,6 +403,10 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 					ACTIVE_REQUEST_CREATED_AT_PREFIX + index,
 					request.createdAt()
 			);
+			output.putString(
+					"requestergolems:active_request_state_" + index,
+					request.state().name()
+			);
 		}
 
 		List<RequesterJob> jobs = this.requestergolems$activeJobs();
@@ -448,6 +474,16 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 						ACTIVE_REQUEST_CREATED_AT_PREFIX + index,
 						0L
 				);
+				String stateName = input.getStringOr(
+						"requestergolems:active_request_state_" + index,
+						RequesterRequest.State.ACTIVE.name()
+				);
+				RequesterRequest.State state;
+				try {
+					state = RequesterRequest.State.valueOf(stateName);
+				} catch (IllegalArgumentException ignored) {
+					state = RequesterRequest.State.ACTIVE;
+				}
 				RequesterRequest request = new RequesterRequest(
 						UUID.fromString(idString),
 						item,
@@ -455,6 +491,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 						remaining,
 						createdAt
 				);
+				request.setState(state);
 				if (!request.isComplete()) {
 					this.requestergolems$activeRequests().add(request);
 				}
