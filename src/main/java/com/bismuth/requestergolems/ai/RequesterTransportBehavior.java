@@ -137,17 +137,20 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				else this.reset();
 				return;
 			}
-			if (this.job.state() != RequesterJob.State.CANCELLED
-					&& (!jobChest.requestergolems$isJobActive(this.job.id())
-							|| !jobChest.requestergolems$isRequestActive(this.job.requestId()))) {
+			if (this.job.state() == RequesterJob.State.CANCELLED) {
+				if (this.carrying) {
+					this.beginReturnToSource(level, body, false);
+				} else {
+					jobChest.requestergolems$cancelJob(this.job.id());
+					this.reset();
+				}
+				return;
+			}
+			if (!jobChest.requestergolems$isJobActive(this.job.id())
+					|| !jobChest.requestergolems$isRequestActive(this.job.requestId())) {
 				this.job = null;
 				if (this.carrying) this.beginReturnToSource(level, body, false);
 				else this.reset();
-				return;
-			}
-			if (this.job.state() == RequesterJob.State.CANCELLED && !this.carrying) {
-				jobChest.requestergolems$cancelJob(this.job.id());
-				this.reset();
 				return;
 			}
 		}
@@ -673,7 +676,10 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			// Keep the job as the durable transaction while the golem physically
 			// returns the carried stack to its recorded source.
 			if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-				this.job.setState(RequesterJob.State.CANCELLED);
+				BlockEntity entity = level.getBlockEntity(this.requesterChestPos);
+				if (entity instanceof RequesterChestAccess requester) {
+					requester.requestergolems$cancelRequest(this.job.requestId());
+				}
 			}
 			this.beginReturnToSource(level, body, false);
 			return;
@@ -682,7 +688,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
 			BlockEntity entity = level.getBlockEntity(this.requesterChestPos);
 			if (entity instanceof RequesterChestAccess requester) {
-				requester.requestergolems$cancelJob(this.job.id());
+				requester.requestergolems$cancelRequest(this.job.requestId());
 			}
 			this.reset();
 			return;
