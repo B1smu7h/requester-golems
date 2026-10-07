@@ -36,6 +36,7 @@ public interface RequesterChestAccess {
 	List<RequesterJob> requestergolems$getActiveJobs();
 	RequesterJob requestergolems$claimJob();
 	void requestergolems$returnJob(RequesterJob job);
+	boolean requestergolems$recoverJob(UUID jobId);
 	boolean requestergolems$isJobActive(UUID jobId);
 	void requestergolems$completeJob(UUID jobId);
 	boolean requestergolems$cancelJob(UUID jobId);
