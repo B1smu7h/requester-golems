@@ -20,6 +20,7 @@ public interface RequesterGolemAccess {
 	void requestergolems$clearRollbackSource();
 	UUID requestergolems$getRecoveryJobId();
 	BlockPos requestergolems$getRecoveryRequesterPos();
-	void requestergolems$setRecoveryState(UUID jobId, BlockPos requesterPos);
+	BlockPos requestergolems$getRecoverySourcePos();
+	void requestergolems$setRecoveryState(UUID jobId, BlockPos requesterPos, BlockPos sourcePos);
 	void requestergolems$clearRecoveryState();
 }
