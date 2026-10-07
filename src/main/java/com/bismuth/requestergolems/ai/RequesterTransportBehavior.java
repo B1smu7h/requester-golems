@@ -58,11 +58,22 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		if (!(body instanceof RequesterGolemAccess access) || !access.requestergolems$isRequester()) {
 			return false;
 		}
+		if (this.carrying && this.interactionPhase == InteractionPhase.RETURNING_TO_SOURCE) {
+			return true;
+		}
 		return body.getMainHandItem().isEmpty() && this.findRequesterChest(level, body) != null;
 	}
 
 	@Override
 	protected void start(ServerLevel level, CopperGolem body, long timestamp) {
+		if (this.carrying && this.interactionPhase == InteractionPhase.RETURNING_TO_SOURCE) {
+			body.setState(CopperGolemState.IDLE);
+			if (this.sourceChestPos != null) {
+				this.moveToContainer(level, body, this.sourceChestPos);
+			}
+			return;
+		}
+
 		this.requesterChestPos = this.findRequesterChest(level, body);
 		if (this.requesterChestPos == null) return;
 
