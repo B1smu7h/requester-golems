@@ -253,7 +253,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 		}
 
 		for (RequesterRequest request : this.requestergolems$activeRequests()) {
-			if (request.isComplete()) continue;
+			if (!request.isActive()) continue;
 
 			int reserved = this.requestergolems$activeJobs().stream()
 					.filter(job -> job.requestId().equals(request.id()) && !job.isComplete())
