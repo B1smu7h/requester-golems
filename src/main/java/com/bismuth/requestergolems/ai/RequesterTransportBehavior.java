@@ -1,5 +1,7 @@
 package com.bismuth.requestergolems.ai;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import com.bismuth.requestergolems.RequesterChestAccess;
@@ -39,6 +41,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	private int interactionTicks;
 	private InteractionPhase interactionPhase = InteractionPhase.NONE;
 	private int retryCooldownTicks;
+	private final Set<BlockPos> inspectedSourceChests = new HashSet<>();
 
 	private enum InteractionPhase {
 		NONE,
@@ -108,16 +111,9 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 		this.sourceChestPos = this.job.sourceChestPos();
 		if (this.sourceChestPos == null) {
-			this.sourceChestPos = this.findSourceChest(level, body, this.job.stack());
+			this.sourceChestPos = this.findSourceChestToInspect(level, body);
 		}
 		if (this.sourceChestPos != null) this.job.setSourceChestPos(this.sourceChestPos);
-		if (this.sourceChestPos == null) {
-			// No matching source was found. Pick a real chest to inspect so an
-			// empty source is an actual failed attempt rather than an
-			// omniscient "nothing exists" result.
-			this.sourceChestPos = this.findSourceChestToInspect(level, body);
-			if (this.sourceChestPos != null) this.job.setSourceChestPos(this.sourceChestPos);
-		}
 		if (this.sourceChestPos == null) {
 			this.failAndRetry(level, body);
 			return;
@@ -183,7 +179,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 		if (!this.carrying) {
 			if (this.sourceChestPos == null) {
-				this.sourceChestPos = this.findSourceChest(level, body, this.job.stack());
+				this.sourceChestPos = this.findSourceChestToInspect(level, body);
 				if (this.sourceChestPos == null) {
 					this.failAndRetry(level, body);
 					return;
@@ -220,6 +216,9 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 				int available = Math.max(0, countMatching(source, this.job.stack()) - 1);
 				if (available <= 0) {
+					this.inspectedSourceChests.add(this.sourceChestPos);
+					this.sourceChestPos = null;
+					this.job.setSourceChestPos(null);
 					source.stopOpen(body);
 					body.clearOpenedChestPos();
 					body.setState(CopperGolemState.GETTING_NO_ITEM);
@@ -240,15 +239,15 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				body.clearOpenedChestPos();
 				this.interactionPhase = InteractionPhase.NONE;
 				if (picked.isEmpty()) {
+					this.inspectedSourceChests.add(this.sourceChestPos);
+					this.sourceChestPos = null;
+					this.job.setSourceChestPos(null);
 					body.setState(CopperGolemState.GETTING_NO_ITEM);
 					this.failAndRetry(level, body);
 					return;
 				}
 
 				body.setItemSlot(EquipmentSlot.MAINHAND, picked);
-				if (body instanceof RequesterGolemAccess rollbackAccess) {
-					rollbackAccess.requestergolems$setRollbackSource(this.sourceChestPos);
-				}
 				System.out.println("[RG DEBUG] CARRYING job=" + this.job.id()
 						+ " hand=" + body.getMainHandItem()
 						+ " rollbackSource=" + this.sourceChestPos);
@@ -460,6 +459,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				center.offset(REQUEST_RANGE_HORIZONTAL, REQUEST_RANGE_VERTICAL, REQUEST_RANGE_HORIZONTAL))) {
 			BlockEntity entity = level.getBlockEntity(pos);
 			if (!(entity instanceof ChestBlockEntity)) continue;
+			if (this.inspectedSourceChests.contains(pos)) continue;
 
 			var state = level.getBlockState(pos);
 			if (!(state.getBlock() instanceof ChestBlock) || state.getBlock() instanceof CopperChestBlock) continue;
@@ -488,6 +488,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				center.offset(REQUEST_RANGE_HORIZONTAL, REQUEST_RANGE_VERTICAL, REQUEST_RANGE_HORIZONTAL))) {
 			BlockEntity entity = level.getBlockEntity(pos);
 			if (!(entity instanceof ChestBlockEntity)) continue;
+			if (this.inspectedSourceChests.contains(pos)) continue;
 
 			var state = level.getBlockState(pos);
 			if (!(state.getBlock() instanceof ChestBlock) || state.getBlock() instanceof CopperChestBlock) continue;
