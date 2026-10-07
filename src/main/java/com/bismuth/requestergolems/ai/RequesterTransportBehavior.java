@@ -90,6 +90,10 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			this.reset();
 			return;
 		}
+		System.out.println("[RG DEBUG] START job=" + this.job.id()
+				+ " request=" + this.job.requestId()
+				+ " requester=" + this.requesterChestPos
+				+ " requested=" + this.job.stack());
 
 		if (this.job.state() == RequesterJob.State.CANCELLED) {
 			if (this.carrying) {
@@ -200,6 +204,9 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 			if (this.interactionPhase == InteractionPhase.NONE) {
 				this.interactionPhase = InteractionPhase.PICKING_UP;
+				System.out.println("[RG DEBUG] PICKUP_BEGIN job=" + this.job.id()
+						+ " source=" + this.sourceChestPos
+						+ " requested=" + this.job.stack());
 				body.getNavigation().stop();
 				this.interactionTicks = TARGET_INTERACTION_TICKS;
 				body.setState(CopperGolemState.GETTING_ITEM);
@@ -223,6 +230,12 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 				int amount = Math.min(this.job.stack().getCount(), Math.min(16, available));
 				ItemStack picked = removeMatching(source, this.job.stack(), amount);
+				System.out.println("[RG DEBUG] PICKUP_RESULT job=" + this.job.id()
+						+ " matching=" + countMatching(source, this.job.stack())
+						+ " availableBefore=" + available
+						+ " amount=" + amount
+						+ " picked=" + picked
+						+ " handBefore=" + body.getMainHandItem());
 				source.stopOpen(body);
 				body.clearOpenedChestPos();
 				this.interactionPhase = InteractionPhase.NONE;
@@ -236,6 +249,9 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				if (body instanceof RequesterGolemAccess rollbackAccess) {
 					rollbackAccess.requestergolems$setRollbackSource(this.sourceChestPos);
 				}
+				System.out.println("[RG DEBUG] CARRYING job=" + this.job.id()
+						+ " hand=" + body.getMainHandItem()
+						+ " rollbackSource=" + this.sourceChestPos);
 				body.setState(CopperGolemState.IDLE);
 				this.carrying = true;
 				body.getNavigation().moveTo(
@@ -349,6 +365,12 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		}
 
 		if (this.carrying) {
+			System.out.println("[RG DEBUG] STOP job=" + (this.job == null ? "null" : this.job.id())
+					+ " carrying=" + this.carrying
+					+ " hand=" + body.getMainHandItem()
+					+ " phase=" + this.interactionPhase
+					+ " source=" + this.sourceChestPos
+					+ " requester=" + this.requesterChestPos);
 			if (body instanceof RequesterGolemAccess rollbackAccess) {
 				rollbackAccess.requestergolems$setRollbackSource(this.sourceChestPos);
 			}
@@ -631,7 +653,13 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		if (--this.interactionTicks > 0) return;
 
 		ItemStack carried = body.getMainHandItem();
+		System.out.println("[RG DEBUG] ROLLBACK source=" + this.sourceChestPos
+				+ " handBefore=" + carried
+				+ " job=" + (this.job == null ? "null" : this.job.id()));
 		ItemStack remainder = insertIntoContainer(source, carried.copy());
+		System.out.println("[RG DEBUG] ROLLBACK_RESULT source=" + this.sourceChestPos
+				+ " remainder=" + remainder
+				+ " handAfterBeforeSet=" + body.getMainHandItem());
 		source.stopOpen(body);
 		body.clearOpenedChestPos();
 
