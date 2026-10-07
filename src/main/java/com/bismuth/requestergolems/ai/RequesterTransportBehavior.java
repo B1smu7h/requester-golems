@@ -264,7 +264,10 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				body.setState(CopperGolemState.IDLE);
 				this.carrying = true;
 				if (body instanceof RequesterGolemAccess access) {
-					access.requestergolems$setRollbackSource(this.sourceChestPos);
+					// Recovery state is persisted for save/reload. The rollback source
+					// must NOT be armed here: CopperGolemMixin uses that flag for an
+					// emergency physical return, and this golem is currently carrying
+					// an active job toward the requester chest.
 					access.requestergolems$setRecoveryState(this.job.id(), this.requesterChestPos);
 				}
 				body.getNavigation().moveTo(
