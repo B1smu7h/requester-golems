@@ -160,10 +160,9 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 		}
 	}
 
-	@Inject(method = "dropAllDeathLoot", at = @At("HEAD"))
+	@Inject(method = "dropEquipment", at = @At("HEAD"))
 	private void requestergolems$dropCarriedItemOnDeath(
 			ServerLevel level,
-			DamageSource source,
 			CallbackInfo ci
 	) {
 		if (!this.requestergolems$requester) return;
