@@ -1,5 +1,7 @@
 package com.bismuth.requestergolems.mixin;
 
+import java.util.UUID;
+
 import com.bismuth.requestergolems.RequesterGolemAccess;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
