@@ -85,12 +85,14 @@ public final class RequesterRequest {
 	}
 
 	public RequesterRequest copy() {
-		return new RequesterRequest(
+		RequesterRequest copy = new RequesterRequest(
 				this.id,
 				this.requestedItem,
 				this.originalCount,
 				this.remainingCount,
 				this.createdAt
 		);
+		copy.setState(this.state);
+		return copy;
 	}
 }
