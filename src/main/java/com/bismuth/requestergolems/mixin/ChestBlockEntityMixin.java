@@ -41,6 +41,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	private static final String ACTIVE_JOB_REQUEST_ID_PREFIX = "requestergolems:active_job_request_id_";
 	private static final String ACTIVE_JOB_ITEM_PREFIX = "requestergolems:active_job_item_";
 	private static final String ACTIVE_JOB_ORIGINAL_COUNT_PREFIX = "requestergolems:active_job_original_count_";
+	private static final String ACTIVE_JOB_FAILURES_PREFIX = "requestergolems:active_job_failures_";
 
 	private static final String REDSTONE_KEY = "requestergolems:redstone_powered";
 
@@ -382,6 +383,10 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 					ACTIVE_JOB_ORIGINAL_COUNT_PREFIX + index,
 					job.originalCount()
 			);
+			output.putInt(
+					ACTIVE_JOB_FAILURES_PREFIX + index,
+					job.consecutiveFailures()
+			);
 		}
 
 		for (int slot = 0; slot < RequesterChestAccess.REQUEST_SLOT_COUNT; slot++) {
@@ -467,6 +472,10 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 								input.getIntOr(
 										ACTIVE_JOB_ORIGINAL_COUNT_PREFIX + index,
 										stack.getCount()
+								),
+								input.getIntOr(
+										ACTIVE_JOB_FAILURES_PREFIX + index,
+										0
 								),
 								RequesterJob.State.WAITING
 						)
