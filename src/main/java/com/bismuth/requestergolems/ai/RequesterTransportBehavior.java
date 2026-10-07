@@ -89,12 +89,28 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
-		this.sourceChestPos = this.findSourceChest(level, body, this.job.stack());
+		if (this.job.state() == RequesterJob.State.CANCELLED) {
+			if (this.carrying) {
+				this.sourceChestPos = this.job.sourceChestPos();
+				this.beginReturnToSource(level, body, false);
+			} else {
+				requesterChest.requestergolems$cancelJob(this.job.id());
+				this.reset();
+			}
+			return;
+		}
+
+		this.sourceChestPos = this.job.sourceChestPos();
+		if (this.sourceChestPos == null) {
+			this.sourceChestPos = this.findSourceChest(level, body, this.job.stack());
+		}
+		if (this.sourceChestPos != null) this.job.setSourceChestPos(this.sourceChestPos);
 		if (this.sourceChestPos == null) {
 			// No matching source was found. Pick a real chest to inspect so an
 			// empty source is an actual failed attempt rather than an
 			// omniscient "nothing exists" result.
 			this.sourceChestPos = this.findSourceChestToInspect(level, body);
+			if (this.sourceChestPos != null) this.job.setSourceChestPos(this.sourceChestPos);
 		}
 		if (this.sourceChestPos == null) {
 			this.failAndRetry(level, body);
