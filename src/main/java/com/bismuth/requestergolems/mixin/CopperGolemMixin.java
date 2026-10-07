@@ -85,12 +85,6 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	}
 
 	@Override
-	public void requestergolems$setRecoveryState(UUID jobId, BlockPos requesterPos) {
-		this.requestergolems$recoveryJobId = jobId;
-		this.requestergolems$recoveryRequesterPos = requesterPos == null ? null : requesterPos.immutable();
-	}
-
-	@Override
 	public BlockPos requestergolems$getRecoverySourcePos() {
 		return this.requestergolems$recoverySourcePos;
 	}
