@@ -42,6 +42,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	private InteractionPhase interactionPhase = InteractionPhase.NONE;
 	private int retryCooldownTicks;
 	private final Set<BlockPos> inspectedSourceChests = new HashSet<>();
+	private UUID inspectedRequestId;
 
 	private enum InteractionPhase {
 		NONE,
