@@ -134,6 +134,15 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	protected void tick(ServerLevel level, CopperGolem body, long timestamp) {
 		if (this.requesterChestPos == null || (this.job == null && !this.carrying)) return;
 
+		// Once a carried job has entered the physical rollback phase, that phase
+		// owns the tick until the carried stack is safely returned. Cancellation
+		// changes the job's lifecycle, but must not repeatedly restart the return
+		// operation and prevent tickReturnToSource() from ever running.
+		if (this.interactionPhase == InteractionPhase.RETURNING_TO_SOURCE) {
+			this.tickReturnToSource(level, body);
+			return;
+		}
+
 		if (this.job != null) {
 			BlockEntity jobChestEntity = level.getBlockEntity(this.requesterChestPos);
 			if (!(jobChestEntity instanceof RequesterChestAccess jobChest)) {
