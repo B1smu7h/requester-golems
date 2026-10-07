@@ -595,6 +595,16 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
+		// The source chest is part of the job's physical rollback contract.
+		// If the block was removed while the golem was carrying the item, do not
+		// ask its collision shape for bounds: an empty VoxelShape has no bounds
+		// and throws. More importantly, there is no longer a safe destination for
+		// the carried stack.
+		if (!(level.getBlockState(this.sourceChestPos).getBlock() instanceof ChestBlock)) {
+			this.abandonCarriedItemAfterSourceLoss(level, body);
+			return;
+		}
+
 		if (!this.isInContainerInteractionRange(level, body, this.sourceChestPos)) {
 			this.moveToContainer(level, body, this.sourceChestPos);
 			return;
@@ -637,6 +647,29 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		}
 
 		this.finishReturnToSource(level, body);
+	}
+
+	private void abandonCarriedItemAfterSourceLoss(ServerLevel level, CopperGolem body) {
+		// The item is intentionally left in the vanilla Copper Golem's main hand.
+		// Minecraft already provides the player interaction that removes a carried
+		// item from a Copper Golem, so recovery does not need a custom interaction.
+		body.getNavigation().stop();
+		body.clearOpenedChestPos();
+		body.setState(CopperGolemState.IDLE);
+
+		if (this.job != null && this.requesterChestPos != null) {
+			BlockEntity entity = level.getBlockEntity(this.requesterChestPos);
+			if (entity instanceof RequesterChestAccess requester) {
+				requester.requestergolems$cancelJob(this.job.id());
+				requester.requestergolems$finalizeCancelledRequest(this.job.requestId());
+			}
+		}
+
+		if (body instanceof RequesterGolemAccess rollbackAccess) {
+			rollbackAccess.requestergolems$clearRollbackSource();
+		}
+
+		this.reset();
 	}
 
 	private void finishReturnToSource(ServerLevel level, CopperGolem body) {
