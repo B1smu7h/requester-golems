@@ -1,11 +1,15 @@
 package com.bismuth.requestergolems.mixin;
 
 import com.bismuth.requestergolems.RequesterGolemAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.Container;
+import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.animal.golem.CopperGolem;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,8 +28,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(CopperGolem.class)
 public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	private static final String REQUESTER_KEY = "requestergolems:requester";
+	private static final String ROLLBACK_ACTIVE_KEY = "requestergolems:rollback_active";
+	private static final String ROLLBACK_X_KEY = "requestergolems:rollback_x";
+	private static final String ROLLBACK_Y_KEY = "requestergolems:rollback_y";
+	private static final String ROLLBACK_Z_KEY = "requestergolems:rollback_z";
 
 	private boolean requestergolems$requester;
+	private BlockPos requestergolems$rollbackSource;
 
 	@Override
 	public boolean requestergolems$isRequester() {
@@ -35,6 +44,75 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	@Override
 	public void requestergolems$setRequester(boolean requester) {
 		this.requestergolems$requester = requester;
+	}
+
+	@Override
+	public BlockPos requestergolems$getRollbackSource() {
+		return this.requestergolems$rollbackSource;
+	}
+
+	@Override
+	public void requestergolems$setRollbackSource(BlockPos source) {
+		this.requestergolems$rollbackSource = source == null ? null : source.immutable();
+	}
+
+	@Override
+	public void requestergolems$clearRollbackSource() {
+		this.requestergolems$rollbackSource = null;
+	}
+
+	@Inject(method = "tick", at = @At("HEAD"))
+	private void requestergolems$rollbackCarriedItem(CallbackInfo ci) {
+		CopperGolem golem = (CopperGolem) (Object) this;
+		if (golem.level().isClientSide() || this.requestergolems$rollbackSource == null) return;
+
+		BlockPos sourcePos = this.requestergolems$rollbackSource;
+		if (golem.getMainHandItem().isEmpty()) {
+			this.requestergolems$rollbackSource = null;
+			return;
+		}
+
+		double distanceSq = golem.position().distanceToSqr(sourcePos.getX() + 0.5, sourcePos.getY() + 0.5, sourcePos.getZ() + 0.5);
+		if (distanceSq > 3.5 * 3.5) {
+			golem.getNavigation().moveTo(sourcePos.getX() + 0.5, sourcePos.getY(), sourcePos.getZ() + 0.5, 1.0);
+			return;
+		}
+
+		var state = golem.level().getBlockState(sourcePos);
+		if (!(state.getBlock() instanceof ChestBlock chestBlock)) {
+			return;
+		}
+
+		Container source = ChestBlock.getContainer(
+				chestBlock, state, golem.level(), sourcePos, false
+		);
+		if (source == null) return;
+
+		ItemStack carried = golem.getMainHandItem();
+		ItemStack remainder = carried.copy();
+		for (int slot = 0; slot < source.getContainerSize() && !remainder.isEmpty(); slot++) {
+			ItemStack existing = source.getItem(slot);
+			if (existing.isEmpty() || !existing.is(remainder.getItem())) continue;
+			int moved = Math.min(remainder.getCount(), source.getMaxStackSize());
+			moved = Math.min(moved, existing.getMaxStackSize() - existing.getCount());
+			if (moved > 0) {
+				existing.grow(moved);
+				remainder.shrink(moved);
+				source.setChanged();
+			}
+		}
+		for (int slot = 0; slot < source.getContainerSize() && !remainder.isEmpty(); slot++) {
+			if (!source.getItem(slot).isEmpty() || !source.canPlaceItem(slot, remainder)) continue;
+			int moved = Math.min(remainder.getCount(), source.getMaxStackSize());
+			remainder.shrink(moved);
+			source.setItem(slot, remainder.copyWithCount(moved));
+		}
+
+		golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, remainder);
+		if (remainder.isEmpty()) {
+			this.requestergolems$rollbackSource = null;
+			golem.getNavigation().stop();
+		}
 	}
 
 	@Inject(method = "mobInteract", at = @At("HEAD"), cancellable = true)
@@ -62,10 +140,25 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	@Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
 	private void requestergolems$save(ValueOutput output, CallbackInfo ci) {
 		output.putBoolean(REQUESTER_KEY, this.requestergolems$requester);
+		if (this.requestergolems$rollbackSource != null) {
+			output.putBoolean(ROLLBACK_ACTIVE_KEY, true);
+			output.putInt(ROLLBACK_X_KEY, this.requestergolems$rollbackSource.getX());
+			output.putInt(ROLLBACK_Y_KEY, this.requestergolems$rollbackSource.getY());
+			output.putInt(ROLLBACK_Z_KEY, this.requestergolems$rollbackSource.getZ());
+		}
 	}
 
 	@Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
 	private void requestergolems$load(ValueInput input, CallbackInfo ci) {
 		this.requestergolems$requester = input.getBooleanOr(REQUESTER_KEY, false);
+		if (input.getBooleanOr(ROLLBACK_ACTIVE_KEY, false)) {
+			this.requestergolems$rollbackSource = new BlockPos(
+					input.getIntOr(ROLLBACK_X_KEY, 0),
+					input.getIntOr(ROLLBACK_Y_KEY, 0),
+					input.getIntOr(ROLLBACK_Z_KEY, 0)
+			);
+		} else {
+			this.requestergolems$rollbackSource = null;
+		}
 	}
 }
