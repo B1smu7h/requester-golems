@@ -1,5 +1,7 @@
 package com.bismuth.requestergolems.ai;
 
+import java.util.UUID;
+
 import com.bismuth.requestergolems.RequesterChestAccess;
 import com.bismuth.requestergolems.RequesterGolemAccess;
 import com.bismuth.requestergolems.RequesterJob;
@@ -337,22 +339,28 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			}
 			body.clearOpenedChestPos();
 		}
+
 		if (this.interactionPhase == InteractionPhase.RETURNING_TO_SOURCE) {
-			// This behavior can be interrupted by the vanilla AI scheduler while
-			// the golem is physically returning its carried item. Do NOT requeue
-			// the job or reset here: doing so discards the in-memory failure path
-			// and lets the same job start over indefinitely.
 			body.setState(CopperGolemState.IDLE);
 			return;
 		}
+
 		if (this.carrying) {
-			// Preserve the physical rollback state. The next activation will
-			// continue the return trip instead of mutating the source remotely.
 			this.beginReturnToSource(level, body, false);
 			return;
 		}
+
 		if (this.job != null) {
-			this.returnJob(level);
+			if (this.job.state() == RequesterJob.State.CANCELLED) {
+				BlockEntity entity = level.getBlockEntity(this.requesterChestPos);
+				if (entity instanceof RequesterChestAccess requester) {
+					UUID requestId = this.job.requestId();
+					requester.requestergolems$cancelJob(this.job.id());
+					requester.requestergolems$finalizeCancelledRequest(requestId);
+				}
+			} else {
+				this.returnJob(level);
+			}
 		}
 		body.setState(CopperGolemState.IDLE);
 		this.reset();
@@ -649,7 +657,9 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				|| this.job.consecutiveFailures() >= MAX_CONSECUTIVE_FAILURES) {
 			BlockEntity entity = level.getBlockEntity(this.requesterChestPos);
 			if (entity instanceof RequesterChestAccess requester) {
+				UUID requestId = this.job.requestId();
 				requester.requestergolems$cancelJob(this.job.id());
+				requester.requestergolems$finalizeCancelledRequest(requestId);
 			}
 			this.reset();
 			return;
