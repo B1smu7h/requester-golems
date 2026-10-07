@@ -27,7 +27,8 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	private static final int REQUEST_RANGE_HORIZONTAL = 32;
 	private static final int REQUEST_RANGE_VERTICAL = 8;
 	private static final int TARGET_INTERACTION_TICKS = 20;
-	private static final int RETRY_COOLDOWN_TICKS = 40;
+	private static final int RETRY_COOLDOWN_TICKS = 60;
+	private static final int MAX_CONSECUTIVE_FAILURES = 3;
 
 	private BlockPos requesterChestPos;
 	private BlockPos sourceChestPos;
@@ -243,8 +244,10 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
-		// Only successful insertion counts toward the high-level request.
-		// Transport chunks remain an implementation detail of the parent request.
+		// Any delivery of at least one item is a successful attempt, even when
+		// the destination only accepts part of the carried stack. A successful
+		// attempt resets the job's consecutive failure streak.
+		this.job.resetConsecutiveFailures();
 		requesterAccess.requestergolems$deliverToRequest(this.job.requestId(), delivered);
 		this.job.stack().shrink(delivered);
 		if (this.job.isComplete()) {
@@ -476,11 +479,30 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	}
 
 	private void failAndRetry(ServerLevel level, CopperGolem body) {
+		if (this.job == null) {
+			this.reset();
+			return;
+		}
+
+		int consecutiveFailures = this.job.recordConsecutiveFailure();
+
 		// Roll back carried items before clearing the active job state.
 		if (this.carrying) {
 			this.returnCarriedToSource(level, body);
 			this.carrying = !body.getMainHandItem().isEmpty();
 		}
+
+		if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+			// Three explicit zero-progress attempts terminate this job rather than
+			// allowing it to bounce between requester golems forever.
+			BlockEntity entity = level.getBlockEntity(this.requesterChestPos);
+			if (entity instanceof RequesterChestAccess requester) {
+				requester.requestergolems$cancelJob(this.job.id());
+			}
+			this.reset();
+			return;
+		}
+
 		this.returnJob(level);
 		this.reset();
 		this.retryCooldownTicks = RETRY_COOLDOWN_TICKS;
