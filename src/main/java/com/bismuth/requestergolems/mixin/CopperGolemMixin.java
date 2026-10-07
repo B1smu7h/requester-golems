@@ -39,11 +39,15 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	private static final String RECOVERY_REQUESTER_X_KEY = "requestergolems:recovery_requester_x";
 	private static final String RECOVERY_REQUESTER_Y_KEY = "requestergolems:recovery_requester_y";
 	private static final String RECOVERY_REQUESTER_Z_KEY = "requestergolems:recovery_requester_z";
+	private static final String RECOVERY_SOURCE_X_KEY = "requestergolems:recovery_source_x";
+	private static final String RECOVERY_SOURCE_Y_KEY = "requestergolems:recovery_source_y";
+	private static final String RECOVERY_SOURCE_Z_KEY = "requestergolems:recovery_source_z";
 
 	private boolean requestergolems$requester;
 	private BlockPos requestergolems$rollbackSource;
 	private UUID requestergolems$recoveryJobId;
 	private BlockPos requestergolems$recoveryRequesterPos;
+	private BlockPos requestergolems$recoverySourcePos;
 
 	@Override
 	public boolean requestergolems$isRequester() {
@@ -87,9 +91,22 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	}
 
 	@Override
+	public BlockPos requestergolems$getRecoverySourcePos() {
+		return this.requestergolems$recoverySourcePos;
+	}
+
+	@Override
+	public void requestergolems$setRecoveryState(UUID jobId, BlockPos requesterPos, BlockPos sourcePos) {
+		this.requestergolems$recoveryJobId = jobId;
+		this.requestergolems$recoveryRequesterPos = requesterPos == null ? null : requesterPos.immutable();
+		this.requestergolems$recoverySourcePos = sourcePos == null ? null : sourcePos.immutable();
+	}
+
+	@Override
 	public void requestergolems$clearRecoveryState() {
 		this.requestergolems$recoveryJobId = null;
 		this.requestergolems$recoveryRequesterPos = null;
+		this.requestergolems$recoverySourcePos = null;
 	}
 
 	@Inject(method = "tick", at = @At("HEAD"))
@@ -177,12 +194,15 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 			output.putInt(ROLLBACK_Y_KEY, this.requestergolems$rollbackSource.getY());
 			output.putInt(ROLLBACK_Z_KEY, this.requestergolems$rollbackSource.getZ());
 		}
-		if (this.requestergolems$recoveryJobId != null && this.requestergolems$recoveryRequesterPos != null) {
+		if (this.requestergolems$recoveryJobId != null && this.requestergolems$recoveryRequesterPos != null && this.requestergolems$recoverySourcePos != null) {
 			output.putBoolean(RECOVERY_ACTIVE_KEY, true);
 			output.putString(RECOVERY_JOB_ID_KEY, this.requestergolems$recoveryJobId.toString());
 			output.putInt(RECOVERY_REQUESTER_X_KEY, this.requestergolems$recoveryRequesterPos.getX());
 			output.putInt(RECOVERY_REQUESTER_Y_KEY, this.requestergolems$recoveryRequesterPos.getY());
 			output.putInt(RECOVERY_REQUESTER_Z_KEY, this.requestergolems$recoveryRequesterPos.getZ());
+			output.putInt(RECOVERY_SOURCE_X_KEY, this.requestergolems$recoverySourcePos.getX());
+			output.putInt(RECOVERY_SOURCE_Y_KEY, this.requestergolems$recoverySourcePos.getY());
+			output.putInt(RECOVERY_SOURCE_Z_KEY, this.requestergolems$recoverySourcePos.getZ());
 		}
 	}
 
@@ -210,9 +230,16 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 						input.getIntOr(RECOVERY_REQUESTER_Y_KEY, 0),
 						input.getIntOr(RECOVERY_REQUESTER_Z_KEY, 0)
 				);
+				this.requestergolems$recoverySourcePos = new BlockPos(
+						input.getIntOr(RECOVERY_SOURCE_X_KEY, 0),
+						input.getIntOr(RECOVERY_SOURCE_Y_KEY, 0),
+						input.getIntOr(RECOVERY_SOURCE_Z_KEY, 0)
+				);
+				this.requestergolems$rollbackSource = this.requestergolems$recoverySourcePos;
 			} catch (IllegalArgumentException ignored) {
 				this.requestergolems$recoveryJobId = null;
 				this.requestergolems$recoveryRequesterPos = null;
+				this.requestergolems$recoverySourcePos = null;
 			}
 		}
 	}
