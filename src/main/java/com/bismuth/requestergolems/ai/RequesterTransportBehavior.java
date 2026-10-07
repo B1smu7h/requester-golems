@@ -95,6 +95,11 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
+		if (!this.job.requestId().equals(this.inspectedRequestId)) {
+			this.inspectedSourceChests.clear();
+			this.inspectedRequestId = this.job.requestId();
+		}
+
 		if (this.job.state() == RequesterJob.State.CANCELLED) {
 			if (this.carrying) {
 				this.sourceChestPos = this.job.sourceChestPos();
