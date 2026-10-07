@@ -64,14 +64,25 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		if (!(body instanceof RequesterGolemAccess access) || !access.requestergolems$isRequester()) {
 			return false;
 		}
+		if (!body.getMainHandItem().isEmpty()) {
+			return false;
+		}
+		if (access.requestergolems$getRecoveryJobId() != null) {
+			BlockPos recoveryRequesterPos = access.requestergolems$getRecoveryRequesterPos();
+			return recoveryRequesterPos != null && level.hasChunkAt(recoveryRequesterPos);
+		}
 		if (this.carrying && this.interactionPhase == InteractionPhase.RETURNING_TO_SOURCE) {
 			return true;
 		}
-		return body.getMainHandItem().isEmpty() && this.findRequesterChest(level, body) != null;
+		return this.findRequesterChest(level, body) != null;
 	}
 
 	@Override
 	protected void start(ServerLevel level, CopperGolem body, long timestamp) {
+		if (body instanceof RequesterGolemAccess access && access.requestergolems$getRecoveryJobId() != null) {
+			this.recoverPersistedTransport(level, body, access);
+			return;
+		}
 		if (this.carrying && this.interactionPhase == InteractionPhase.RETURNING_TO_SOURCE) {
 			body.setState(CopperGolemState.IDLE);
 			if (this.sourceChestPos != null) {
@@ -252,6 +263,10 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				body.setItemSlot(EquipmentSlot.MAINHAND, picked);
 				body.setState(CopperGolemState.IDLE);
 				this.carrying = true;
+				if (body instanceof RequesterGolemAccess access) {
+					access.requestergolems$setRollbackSource(this.sourceChestPos);
+					access.requestergolems$setRecoveryState(this.job.id(), this.requesterChestPos);
+				}
 				body.getNavigation().moveTo(
 						this.requesterChestPos.getX() + 0.5,
 						this.requesterChestPos.getY(),
@@ -328,6 +343,10 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		}
 		body.setItemSlot(EquipmentSlot.MAINHAND, remainder);
 		this.carrying = !remainder.isEmpty();
+		if (!this.carrying && body instanceof RequesterGolemAccess access) {
+			access.requestergolems$clearRollbackSource();
+			access.requestergolems$clearRecoveryState();
+		}
 
 		if (this.job.isComplete()) {
 			if (this.carrying) {
@@ -669,6 +688,34 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			rollbackAccess.requestergolems$clearRollbackSource();
 		}
 
+		this.reset();
+	}
+
+	private void recoverPersistedTransport(ServerLevel level, CopperGolem body, RequesterGolemAccess access) {
+		UUID recoveryJobId = access.requestergolems$getRecoveryJobId();
+		BlockPos recoveryRequesterPos = access.requestergolems$getRecoveryRequesterPos();
+		if (recoveryJobId == null || recoveryRequesterPos == null) {
+			access.requestergolems$clearRecoveryState();
+			return;
+		}
+
+		BlockEntity entity = level.getBlockEntity(recoveryRequesterPos);
+		if (!(entity instanceof RequesterChestAccess requester)) {
+			// The chunk is loaded here, so a missing block entity means the old
+			// requester chest no longer exists. Its persistent jobs are gone with it.
+			access.requestergolems$clearRecoveryState();
+			return;
+		}
+
+		for (RequesterJob candidate : requester.requestergolems$getActiveJobs()) {
+			if (candidate.id().equals(recoveryJobId)) {
+				requester.requestergolems$returnJob(candidate);
+				break;
+			}
+		}
+
+		access.requestergolems$clearRecoveryState();
+		body.setState(CopperGolemState.IDLE);
 		this.reset();
 	}
 
