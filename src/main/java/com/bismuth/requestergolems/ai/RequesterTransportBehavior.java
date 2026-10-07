@@ -311,7 +311,15 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			}
 			body.clearOpenedChestPos();
 		}
-		if (this.carrying && this.interactionPhase != InteractionPhase.RETURNING_TO_SOURCE) {
+		if (this.interactionPhase == InteractionPhase.RETURNING_TO_SOURCE) {
+			// This behavior can be interrupted by the vanilla AI scheduler while
+			// the golem is physically returning its carried item. Do NOT requeue
+			// the job or reset here: doing so discards the in-memory failure path
+			// and lets the same job start over indefinitely.
+			body.setState(CopperGolemState.IDLE);
+			return;
+		}
+		if (this.carrying) {
 			// Preserve the physical rollback state. The next activation will
 			// continue the return trip instead of mutating the source remotely.
 			this.beginReturnToSource(level, body, false);
