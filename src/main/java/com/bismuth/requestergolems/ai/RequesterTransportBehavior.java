@@ -642,8 +642,8 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
-		int failures = this.job.consecutiveFailures();
-		if (failures >= MAX_CONSECUTIVE_FAILURES) {
+		if (this.job.state() == RequesterJob.State.CANCELLED
+				|| this.job.consecutiveFailures() >= MAX_CONSECUTIVE_FAILURES) {
 			BlockEntity entity = level.getBlockEntity(this.requesterChestPos);
 			if (entity instanceof RequesterChestAccess requester) {
 				requester.requestergolems$cancelJob(this.job.id());
@@ -652,7 +652,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
-		this.returnJob(level);
+		this.job.setState(RequesterJob.State.WAITING);
 		this.reset();
 		this.retryCooldownTicks = RETRY_COOLDOWN_TICKS;
 	}
@@ -670,9 +670,12 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		int consecutiveFailures = this.job.recordConsecutiveFailure();
 
 		if (this.carrying) {
-			// Do not put the item back by directly mutating the source. The golem
-			// must physically travel back and deposit it before the attempt ends.
-			this.beginReturnToSource(level, body, consecutiveFailures >= MAX_CONSECUTIVE_FAILURES);
+			// Keep the job as the durable transaction while the golem physically
+			// returns the carried stack to its recorded source.
+			if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+				this.job.setState(RequesterJob.State.CANCELLED);
+			}
+			this.beginReturnToSource(level, body, false);
 			return;
 		}
 
@@ -685,7 +688,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
-		this.returnJob(level);
+		this.job.setState(RequesterJob.State.WAITING);
 		this.reset();
 		this.retryCooldownTicks = RETRY_COOLDOWN_TICKS;
 	}
