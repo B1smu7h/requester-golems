@@ -20,6 +20,7 @@ public final class RequesterJob {
 	private final UUID requestId;
 	private final ItemStack stack;
 	private final int originalCount;
+	private int consecutiveFailures;
 	private State state;
 
 	public RequesterJob(UUID id, UUID requestId, ItemStack stack, State state) {
@@ -27,10 +28,22 @@ public final class RequesterJob {
 	}
 
 	public RequesterJob(UUID id, UUID requestId, ItemStack stack, int originalCount, State state) {
+		this(id, requestId, stack, originalCount, 0, state);
+	}
+
+	public RequesterJob(
+			UUID id,
+			UUID requestId,
+			ItemStack stack,
+			int originalCount,
+			int consecutiveFailures,
+			State state
+	) {
 		this.id = id;
 		this.requestId = requestId;
 		this.stack = stack.copy();
 		this.originalCount = Math.max(this.stack.getCount(), originalCount);
+		this.consecutiveFailures = Math.max(0, consecutiveFailures);
 		this.state = state;
 	}
 
@@ -70,7 +83,27 @@ public final class RequesterJob {
 		return this.stack.isEmpty();
 	}
 
+	public int consecutiveFailures() {
+		return this.consecutiveFailures;
+	}
+
+	public int recordConsecutiveFailure() {
+		this.consecutiveFailures++;
+		return this.consecutiveFailures;
+	}
+
+	public void resetConsecutiveFailures() {
+		this.consecutiveFailures = 0;
+	}
+
 	public RequesterJob copy() {
-		return new RequesterJob(this.id, this.requestId, this.stack, this.originalCount, this.state);
+		return new RequesterJob(
+				this.id,
+				this.requestId,
+				this.stack,
+				this.originalCount,
+				this.consecutiveFailures,
+				this.state
+		);
 	}
 }
