@@ -278,6 +278,17 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	}
 
 	@Override
+	public boolean requestergolems$recoverJob(UUID jobId) {
+		for (RequesterJob job : this.requestergolems$activeJobs()) {
+			if (!job.id().equals(jobId) || job.isComplete()) continue;
+			job.setState(RequesterJob.State.WAITING);
+			this.requestergolems$chest().setChanged();
+			return true;
+		}
+		return false;
+	}
+
+	@Override
 	public void requestergolems$returnJob(RequesterJob job) {
 		if (job == null || job.isComplete()) return;
 
