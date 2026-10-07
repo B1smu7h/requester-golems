@@ -46,6 +46,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	private static final String ACTIVE_JOB_SOURCE_X_PREFIX = "requestergolems:active_job_source_x_";
 	private static final String ACTIVE_JOB_SOURCE_Y_PREFIX = "requestergolems:active_job_source_y_";
 	private static final String ACTIVE_JOB_SOURCE_Z_PREFIX = "requestergolems:active_job_source_z_";
+	private static final String ACTIVE_JOB_HAS_SOURCE_PREFIX = "requestergolems:active_job_has_source_";
 
 	private static final String REDSTONE_KEY = "requestergolems:redstone_powered";
 
@@ -396,6 +397,14 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 					ACTIVE_JOB_FAILURES_PREFIX + index,
 					job.consecutiveFailures()
 			);
+			output.putString(ACTIVE_JOB_STATE_PREFIX + index, job.state().name());
+			boolean hasSource = job.sourceChestPos() != null;
+			output.putBoolean(ACTIVE_JOB_HAS_SOURCE_PREFIX + index, hasSource);
+			if (hasSource) {
+				output.putInt(ACTIVE_JOB_SOURCE_X_PREFIX + index, job.sourceChestPos().getX());
+				output.putInt(ACTIVE_JOB_SOURCE_Y_PREFIX + index, job.sourceChestPos().getY());
+				output.putInt(ACTIVE_JOB_SOURCE_Z_PREFIX + index, job.sourceChestPos().getZ());
+			}
 		}
 
 		for (int slot = 0; slot < RequesterChestAccess.REQUEST_SLOT_COUNT; slot++) {
@@ -471,9 +480,9 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 			try {
 				UUID jobId = UUID.fromString(idString);
 				UUID requestId = UUID.fromString(requestIdString);
-				if (!this.requestergolems$isRequestActive(requestId)) continue;
-
 				String stateName = input.getStringOr(ACTIVE_JOB_STATE_PREFIX + index, RequesterJob.State.WAITING.name());
+				if (!this.requestergolems$isRequestActive(requestId) && !RequesterJob.State.CANCELLED.name().equals(stateName)) continue;
+
 				RequesterJob.State state;
 				try {
 					state = RequesterJob.State.valueOf(stateName);
@@ -481,9 +490,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 					state = RequesterJob.State.WAITING;
 				}
 				BlockPos sourcePos = null;
-				if (input.contains(ACTIVE_JOB_SOURCE_X_PREFIX + index)
-						&& input.contains(ACTIVE_JOB_SOURCE_Y_PREFIX + index)
-						&& input.contains(ACTIVE_JOB_SOURCE_Z_PREFIX + index)) {
+				if (input.getBooleanOr(ACTIVE_JOB_HAS_SOURCE_PREFIX + index, false)) {
 					sourcePos = new BlockPos(
 							input.getIntOr(ACTIVE_JOB_SOURCE_X_PREFIX + index, 0),
 							input.getIntOr(ACTIVE_JOB_SOURCE_Y_PREFIX + index, 0),
