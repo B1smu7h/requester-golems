@@ -26,6 +26,8 @@ public interface RequesterChestAccess {
 	boolean requestergolems$hasActiveRequests();
 	List<RequesterRequest> requestergolems$getActiveRequests();
 	boolean requestergolems$isRequestActive(UUID requestId);
+	boolean requestergolems$isRequestCancelling(UUID requestId);
+	void requestergolems$finalizeCancelledRequest(UUID requestId);
 	boolean requestergolems$cancelRequest(UUID requestId);
 	void requestergolems$deliverToRequest(UUID requestId, int amount);
 
