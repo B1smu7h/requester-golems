@@ -170,17 +170,17 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 
 		CopperGolem golem = (CopperGolem) (Object) this;
 		ItemStack carried = golem.getItemBySlot(EquipmentSlot.MAINHAND);
-		if (carried.isEmpty()) return;
 
 		// Requester transport uses the vanilla main hand as its cargo slot. Make
 		// that cargo an explicit death drop before Copper Golem's normal equipment
 		// drop hook runs, then clear the slot so vanilla cannot drop it twice.
-		golem.spawnAtLocation(level, carried.copy());
-		golem.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+		if (!carried.isEmpty()) {
+			golem.spawnAtLocation(level, carried.copy());
+			golem.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+		}
 
-		// The carried stack belongs to an active transport job. The golem can no
-		// longer finish that job after death, so immediately release the job back
-		// to the requester chest for another golem to claim.
+		// The transport job is separate from the physical stack. Recover it even
+		// if the stack was already removed from the golem before death.
 		UUID recoveryJobId = this.requestergolems$recoveryJobId;
 		BlockPos recoveryRequesterPos = this.requestergolems$recoveryRequesterPos;
 		if (recoveryJobId != null && recoveryRequesterPos != null) {
