@@ -3,6 +3,7 @@ package com.bismuth.requestergolems;
 import net.fabricmc.api.ModInitializer;
 import com.bismuth.requestergolems.menu.ModMenuTypes;
 import com.bismuth.requestergolems.network.CancelRequesterRequestPayload;
+import com.bismuth.requestergolems.network.SetRequesterRequestPayload;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
@@ -19,7 +20,12 @@ public class RequesterGolems implements ModInitializer {
 				CancelRequesterRequestPayload.TYPE,
 				CancelRequesterRequestPayload.CODEC
 		);
+		PayloadTypeRegistry.serverboundPlay().register(
+				SetRequesterRequestPayload.TYPE,
+				SetRequesterRequestPayload.CODEC
+		);
 		CancelRequesterRequestPayload.registerServerReceiver();
+		SetRequesterRequestPayload.registerServerReceiver();
 		LOGGER.info("Requester Golems initialized.");
 	}
 
