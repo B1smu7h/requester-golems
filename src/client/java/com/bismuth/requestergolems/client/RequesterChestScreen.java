@@ -427,7 +427,9 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				ItemStack carried = this.menu.getCarried();
 				ItemStack requested = carried.isEmpty()
 						? ItemStack.EMPTY
-						: carried.copyWithCount(event.button() == 1 ? 1 : carried.getCount());
+						: event.button() == 1
+								? incrementRequestStack(column, carried)
+								: carried.copyWithCount(carried.getCount());
 				this.menu.requestergolems$setRequestClientPreview(column, requested);
 				if (this.minecraft.gameMode != null) {
 					ClientPlayNetworking.send(new SetRequesterRequestPayload(column, requested));
@@ -473,6 +475,14 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			}
 		}
 		return super.mouseScrolled(x, y, scrollX, scrollY);
+	}
+
+	private ItemStack incrementRequestStack(int column, ItemStack carried) {
+		ItemStack current = this.menu.getSlot(RequesterChestMenu.REQUEST_SLOT_START + column).getItem();
+		if (current.isEmpty() || !ItemStack.isSameItemSameComponents(current, carried)) {
+			return carried.copyWithCount(1);
+		}
+		return current.copyWithCount(Math.min(current.getMaxStackSize(), current.getCount() + 1));
 	}
 
 	private boolean isInsideRequestSlots(double mouseX, double mouseY) {
