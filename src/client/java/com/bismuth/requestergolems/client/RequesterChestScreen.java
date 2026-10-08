@@ -428,7 +428,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 				ItemStack requested = carried.isEmpty()
 						? ItemStack.EMPTY
 						: carried.copyWithCount(event.button() == 0 ? 1 : carried.getCount());
-				this.menu.requestergolems$setRequestFromClient(column, requested);
+				this.menu.requestergolems$setRequestClientPreview(column, requested);
 				if (this.minecraft.gameMode != null) {
 					ClientPlayNetworking.send(new SetRequesterRequestPayload(column, requested));
 				}
