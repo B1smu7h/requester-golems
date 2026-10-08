@@ -421,13 +421,13 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		if (!this.settingsMode && event.button() <= 1 && this.isInsideRequestSlots(event.x(), event.y())) {
+		if (!this.settingsMode && (event.button() == 1 || event.button() == 3) && this.isInsideRequestSlots(event.x(), event.y())) {
 			int column = (int)((event.x() - (this.leftPos + RequesterChestMenu.REQUEST_X)) / 18);
 			if (column >= 0 && column < RequesterChestMenu.REQUEST_SLOT_COUNT) {
 				ItemStack carried = this.menu.getCarried();
 				ItemStack requested = carried.isEmpty()
 						? ItemStack.EMPTY
-						: carried.copyWithCount(event.button() == 0 ? 1 : carried.getCount());
+						: carried.copyWithCount(event.button() == 1 ? 1 : carried.getCount());
 				this.menu.requestergolems$setRequestClientPreview(column, requested);
 				if (this.minecraft.gameMode != null) {
 					ClientPlayNetworking.send(new SetRequesterRequestPayload(column, requested));
