@@ -422,7 +422,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
 		if (!this.settingsMode && event.button() <= 1 && this.isInsideRequestSlots(event.x(), event.y())) {
-			int column = (int)((event.x() - (this.leftPos + REQUEST_X)) / 18);
+			int column = (int)((event.x() - (this.leftPos + RequesterChestMenu.REQUEST_X)) / 18);
 			if (column >= 0 && column < RequesterChestMenu.REQUEST_SLOT_COUNT) {
 				ItemStack carried = this.menu.getCarried();
 				ItemStack requested = carried.isEmpty()
@@ -476,10 +476,10 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	}
 
 	private boolean isInsideRequestSlots(double mouseX, double mouseY) {
-		return mouseX >= this.leftPos + REQUEST_X
-				&& mouseX < this.leftPos + REQUEST_X + RequesterChestMenu.REQUEST_SLOT_COUNT * 18
-				&& mouseY >= this.topPos + REQUEST_Y
-				&& mouseY < this.topPos + REQUEST_Y + 18;
+		return mouseX >= this.leftPos + RequesterChestMenu.REQUEST_X
+				&& mouseX < this.leftPos + RequesterChestMenu.REQUEST_X + RequesterChestMenu.REQUEST_SLOT_COUNT * 18
+				&& mouseY >= this.topPos + RequesterChestMenu.REQUEST_Y
+				&& mouseY < this.topPos + RequesterChestMenu.REQUEST_Y + 18;
 	}
 
 	private boolean isInsideModeButton(double mouseX, double mouseY) {
