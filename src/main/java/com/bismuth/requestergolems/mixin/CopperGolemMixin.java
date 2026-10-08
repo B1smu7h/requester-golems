@@ -2,6 +2,7 @@ package com.bismuth.requestergolems.mixin;
 
 import java.util.UUID;
 
+import com.bismuth.requestergolems.RequesterChestAccess;
 import com.bismuth.requestergolems.RequesterGolemAccess;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
@@ -176,6 +177,20 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 		// drop hook runs, then clear the slot so vanilla cannot drop it twice.
 		golem.spawnAtLocation(level, carried.copy());
 		golem.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+
+		// The carried stack belongs to an active transport job. The golem can no
+		// longer finish that job after death, so immediately release the job back
+		// to the requester chest for another golem to claim.
+		UUID recoveryJobId = this.requestergolems$recoveryJobId;
+		BlockPos recoveryRequesterPos = this.requestergolems$recoveryRequesterPos;
+		if (recoveryJobId != null && recoveryRequesterPos != null) {
+			level.getChunkAt(recoveryRequesterPos);
+			if (level.getBlockEntity(recoveryRequesterPos) instanceof RequesterChestAccess requesterChest) {
+				requesterChest.requestergolems$recoverJob(recoveryJobId);
+			}
+		}
+		this.requestergolems$clearRecoveryState();
+		this.requestergolems$clearRollbackSource();
 	}
 
 	@Inject(method = "mobInteract", at = @At("HEAD"), cancellable = true)
