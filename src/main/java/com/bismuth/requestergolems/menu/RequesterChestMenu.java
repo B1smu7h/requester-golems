@@ -279,6 +279,11 @@ public class RequesterChestMenu extends ChestMenu {
 		super.clicked(slotIndex, buttonNum, input, player);
 	}
 
+	public ItemStack requestergolems$getRequestStack(int requestIndex) {
+		if (requestIndex < 0 || requestIndex >= REQUEST_SLOT_COUNT) return ItemStack.EMPTY;
+		return this.requestContainer.getItem(requestIndex);
+	}
+
 	public void requestergolems$setRequestClientPreview(int requestIndex, ItemStack stack) {
 		if (requestIndex < 0 || requestIndex >= REQUEST_SLOT_COUNT) return;
 		this.requestContainer.setItem(requestIndex, stack.copy());
