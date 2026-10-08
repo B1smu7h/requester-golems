@@ -2,6 +2,7 @@ package com.bismuth.requestergolems.client;
 
 import com.bismuth.requestergolems.menu.RequesterChestMenu;
 import com.bismuth.requestergolems.network.CancelRequesterRequestPayload;
+import com.bismuth.requestergolems.network.SetRequesterRequestPayload;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -420,6 +421,21 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		if (!this.settingsMode && event.button() <= 1 && this.isInsideRequestSlots(event.x(), event.y())) {
+			int column = (int)((event.x() - (this.leftPos + REQUEST_X)) / 18);
+			if (column >= 0 && column < RequesterChestMenu.REQUEST_SLOT_COUNT) {
+				ItemStack carried = this.menu.getCarried();
+				ItemStack requested = carried.isEmpty()
+						? ItemStack.EMPTY
+						: carried.copyWithCount(event.button() == 0 ? 1 : carried.getCount());
+				this.menu.requestergolems$setRequestFromClient(column, requested);
+				if (this.minecraft.gameMode != null) {
+					ClientPlayNetworking.send(new SetRequesterRequestPayload(column, requested));
+				}
+				return true;
+			}
+		}
+
 		if (this.settingsMode) {
 			if (this.isInsideModeButton(event.x(), event.y())) {
 				return super.mouseClicked(event, doubleClick);
@@ -457,6 +473,13 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			}
 		}
 		return super.mouseScrolled(x, y, scrollX, scrollY);
+	}
+
+	private boolean isInsideRequestSlots(double mouseX, double mouseY) {
+		return mouseX >= this.leftPos + REQUEST_X
+				&& mouseX < this.leftPos + REQUEST_X + RequesterChestMenu.REQUEST_SLOT_COUNT * 18
+				&& mouseY >= this.topPos + REQUEST_Y
+				&& mouseY < this.topPos + REQUEST_Y + 18;
 	}
 
 	private boolean isInsideModeButton(double mouseX, double mouseY) {
