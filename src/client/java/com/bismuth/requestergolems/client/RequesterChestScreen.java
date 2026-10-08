@@ -478,7 +478,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	}
 
 	private ItemStack incrementRequestStack(int column, ItemStack carried) {
-		ItemStack current = this.menu.getSlot(RequesterChestMenu.REQUEST_SLOT_START + column).getItem();
+		ItemStack current = this.menu.requestergolems$getRequestStack(column);
 		if (current.isEmpty() || !ItemStack.isSameItemSameComponents(current, carried)) {
 			return carried.copyWithCount(1);
 		}
