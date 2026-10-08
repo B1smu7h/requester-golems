@@ -271,6 +271,19 @@ public class RequesterChestMenu extends ChestMenu {
 		if (slotIndex >= REQUEST_SLOT_START
 				&& slotIndex < REQUEST_SLOT_START + REQUEST_SLOT_COUNT
 				&& input == ContainerInput.PICKUP) {
+			// Request slots are ghost slots: placing an item must copy the held
+			// stack into the request without moving the real inventory stack.
+			// In particular, left-click must never consume the player's carried item.
+			if (buttonNum == 0) {
+				ItemStack carried = getCarried();
+				if (!carried.isEmpty()) {
+					getSlot(slotIndex).setByPlayer(carried.copyWithCount(1));
+					broadcastChanges();
+				}
+				return;
+			}
+
+			// Preserve the existing right-click behavior.
 			Slot slot = getSlot(slotIndex);
 			ItemStack carried = getCarried();
 			slot.setByPlayer(carried.isEmpty() ? ItemStack.EMPTY : carried.copy());
