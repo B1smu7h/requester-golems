@@ -276,10 +276,10 @@ public class RequesterChestMenu extends ChestMenu {
 			// In particular, left-click must never consume the player's carried item.
 			if (buttonNum == 0) {
 				ItemStack carried = getCarried();
-				if (!carried.isEmpty()) {
-					getSlot(slotIndex).setByPlayer(carried.copyWithCount(1));
-					broadcastChanges();
-				}
+				getSlot(slotIndex).setByPlayer(
+						carried.isEmpty() ? ItemStack.EMPTY : carried.copyWithCount(1)
+				);
+				broadcastChanges();
 				return;
 			}
 
