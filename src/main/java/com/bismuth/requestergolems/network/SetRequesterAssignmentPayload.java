@@ -36,7 +36,7 @@ public record SetRequesterAssignmentPayload(String query, boolean assigned) impl
 		ServerPlayNetworking.registerGlobalReceiver(TYPE, (payload, context) -> {
 			var player = context.player();
 			if (payload.query() == null || payload.query().strip().isEmpty() || payload.query().length() > 32) {
-				player.displayClientMessage(Component.literal("Enter a golem name or public ID (for example #000042)."), true);
+				player.sendSystemMessage(Component.literal("Enter a golem name or public ID (for example #000042)."));
 				return;
 			}
 			if (!(player.containerMenu instanceof RequesterChestMenu menu)) return;
@@ -49,11 +49,11 @@ public record SetRequesterAssignmentPayload(String query, boolean assigned) impl
 			if (server == null) return;
 			List<CopperGolem> matches = RequesterGolemLookup.findLoaded(server, payload.query(), 2);
 			if (matches.isEmpty()) {
-				player.displayClientMessage(Component.literal("No loaded Requester Golem matched that name or ID."), true);
+				player.sendSystemMessage(Component.literal("No loaded Requester Golem matched that name or ID."));
 				return;
 			}
 			if (matches.size() != 1) {
-				player.displayClientMessage(Component.literal("That name matches multiple golems. Use the unique public ID instead."), true);
+				player.sendSystemMessage(Component.literal("That name matches multiple golems. Use the unique public ID instead."));
 				return;
 			}
 
@@ -61,7 +61,7 @@ public record SetRequesterAssignmentPayload(String query, boolean assigned) impl
 			if (!(golem instanceof RequesterGolemAccess golemAccess)
 					|| golemAccess.requestergolems$getOwner() == null
 					|| !golemAccess.requestergolems$getOwner().equals(player.getUUID())) {
-				player.displayClientMessage(Component.literal("You can only assign Requester Golems that you own. Legacy golems must be claimed first (sneak + empty-hand right-click)."), true);
+				player.sendSystemMessage(Component.literal("You can only assign Requester Golems that you own. Legacy golems must be claimed first (sneak + empty-hand right-click)."));
 				return;
 			}
 
@@ -70,12 +70,12 @@ public record SetRequesterAssignmentPayload(String query, boolean assigned) impl
 					chestAccess.requestergolems$getIdentity(),
 					payload.assigned()
 			);
-			player.displayClientMessage(Component.literal(
+			player.sendSystemMessage(Component.literal(
 					(payload.assigned() ? "Assigned " : "Unassigned ")
 							+ golemAccess.requestergolems$getDisplayName()
 							+ " (#" + String.format(java.util.Locale.ROOT, "%06d", golemAccess.requestergolems$getPublicId()) + ") "
 							+ (payload.assigned() ? "exclusively to this Requester Chest." : "from this Requester Chest.")
-			), true);
+			));
 		});
 	}
 }
