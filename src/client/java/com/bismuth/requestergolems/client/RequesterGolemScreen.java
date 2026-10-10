@@ -58,5 +58,15 @@ public final class RequesterGolemScreen extends Screen {
 			graphics.centeredText(this.font, Component.literal(status),
 					this.width / 2, this.height / 2 - 16, 0xFFB0B0B0);
 		}
+
+		graphics.centeredText(this.font, Component.literal("Upgrade slots — planned for V1.2"),
+				this.width / 2, this.height / 2 + 48, 0xFFB0B0B0);
+		for (int slot = 0; slot < 3; slot++) {
+			int x = this.width / 2 - 27 + slot * 27;
+			int y = this.height / 2 + 60;
+			graphics.fill(x, y, x + 22, y + 22, 0xFF373737);
+			graphics.fill(x + 1, y + 1, x + 21, y + 21, 0xFF8B8B8B);
+			graphics.fill(x + 2, y + 2, x + 20, y + 20, 0xFF373737);
+		}
 	}
 }
