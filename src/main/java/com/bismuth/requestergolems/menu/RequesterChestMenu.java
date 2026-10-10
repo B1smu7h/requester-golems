@@ -115,6 +115,8 @@ public class RequesterChestMenu extends ChestMenu {
 		}
 	}
 
+	public ChestBlockEntity requestergolems$getRequesterChest() { return this.requesterChest; }
+
 	public void requestergolems$setActiveRequestView(int firstIndex) {
 		if (firstIndex < 0) {
 			for (int slot = 0; slot < ACTIVE_REQUEST_SLOT_COUNT; slot++) {
