@@ -13,7 +13,7 @@ public class RequesterGolemsClient implements ClientModInitializer {
 		MenuScreens.register(ModMenuTypes.REQUESTER_CHEST, RequesterChestScreen::new);
 		ClientPlayNetworking.registerGlobalReceiver(RequesterAssignmentsListPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> {
-					if (context.client().screen instanceof RequesterChestScreen screen) {
+					if (context.client().gui.screen() instanceof RequesterChestScreen screen) {
 						screen.requestergolems$setAssignedGolemsText(payload.assignedGolems());
 					}
 				}));
