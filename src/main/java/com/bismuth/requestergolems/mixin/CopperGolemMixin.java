@@ -295,7 +295,7 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 		output.putBoolean(REQUESTER_KEY, this.requestergolems$requester);
 		output.putInt(PUBLIC_ID_KEY, this.requestergolems$publicId);
 		output.putString(DISPLAY_NAME_KEY, this.requestergolems$displayName == null ? "Requester Golem" : this.requestergolems$displayName);
-		output.putString(ASSIGNMENTS_KEY, String.join("\\n", this.requestergolems$assignments));
+		output.putString(ASSIGNMENTS_KEY, String.join(";", this.requestergolems$assignments));
 		if (this.requestergolems$owner != null) {
 			output.putString(OWNER_UUID_KEY, this.requestergolems$owner.toString());
 		}
@@ -324,7 +324,7 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 		this.requestergolems$displayName = input.getStringOr(DISPLAY_NAME_KEY, "Requester Golem");
 		this.requestergolems$assignments.clear();
 		String assignments = input.getStringOr(ASSIGNMENTS_KEY, "");
-		for (String assignment : assignments.split("\\n")) {
+		for (String assignment : assignments.split(";")) {
 			if (assignment.contains("|") && assignment.length() <= 256) this.requestergolems$assignments.add(assignment);
 		}
 		String ownerString = input.getStringOr(OWNER_UUID_KEY, "");
