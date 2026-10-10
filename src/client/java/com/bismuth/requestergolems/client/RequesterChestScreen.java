@@ -485,8 +485,8 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		}
 
 		if (this.settingsMode) {
-			if (super.mouseClicked(event, doubleClick)) return true;
-
+			// Handle cancellation rows before AbstractContainerScreen can route the
+			// click to the hidden backing slot. The row itself is the button.
 			if (event.button() == 1 && this.isInsideSettingsList(event.x(), event.y())) {
 				int visible = (int)((event.y() - (this.topPos + SETTINGS_LIST_TOP)) / SETTINGS_ROW_HEIGHT);
 				if (visible >= 0 && visible < SETTINGS_VISIBLE_ROWS) {
@@ -498,6 +498,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 					}
 				}
 			}
+			if (super.mouseClicked(event, doubleClick)) return true;
 			return true;
 		}
 		return super.mouseClicked(event, doubleClick);
