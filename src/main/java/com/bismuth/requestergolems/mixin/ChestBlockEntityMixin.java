@@ -28,6 +28,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ChestBlockEntity.class)
 public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	private static final String REQUESTER_KEY = "requestergolems:requester";
+	private static final String IDENTITY_KEY = "requestergolems:identity";
+	private UUID requestergolems$identity;
 	private static final String REQUEST_KEY_PREFIX = "requestergolems:request_";
 
 	private static final String ACTIVE_REQUEST_COUNT_KEY = "requestergolems:active_request_count";
@@ -85,6 +87,12 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	}
 
 	@Override
+	public UUID requestergolems$getIdentity() {
+		if (this.requestergolems$identity == null) this.requestergolems$identity = UUID.randomUUID();
+		return this.requestergolems$identity;
+	}
+
+	@Override
 	public boolean requestergolems$isRequester() {
 		return this.requestergolems$requester;
 	}
@@ -92,6 +100,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	@Override
 	public void requestergolems$setRequester(boolean requester) {
 		this.requestergolems$requester = requester;
+		if (requester) this.requestergolems$getIdentity();
 		this.requestergolems$chest().setChanged();
 	}
 
@@ -403,6 +412,7 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	@Inject(method = "saveAdditional", at = @At("TAIL"))
 	private void requestergolems$save(ValueOutput output, CallbackInfo ci) {
 		output.putBoolean(REQUESTER_KEY, this.requestergolems$requester);
+		if (this.requestergolems$requester) output.putString(IDENTITY_KEY, this.requestergolems$getIdentity().toString());
 		output.putBoolean(REDSTONE_KEY, this.requestergolems$redstonePowered);
 
 		List<RequesterRequest> requests = this.requestergolems$activeRequests();
@@ -469,6 +479,10 @@ public abstract class ChestBlockEntityMixin implements RequesterChestAccess {
 	@Inject(method = "loadAdditional", at = @At("TAIL"))
 	private void requestergolems$load(ValueInput input, CallbackInfo ci) {
 		this.requestergolems$requester = input.getBooleanOr(REQUESTER_KEY, false);
+		String identity = input.getStringOr(IDENTITY_KEY, "");
+		try { this.requestergolems$identity = identity.isBlank() ? null : UUID.fromString(identity); }
+		catch (IllegalArgumentException ignored) { this.requestergolems$identity = null; }
+		if (this.requestergolems$requester && this.requestergolems$identity == null) this.requestergolems$identity = UUID.randomUUID();
 		this.requestergolems$redstonePowered = input.getBooleanOr(REDSTONE_KEY, false);
 		this.requestergolems$completionPulse = false;
 		this.requestergolems$activeRequests().clear();
