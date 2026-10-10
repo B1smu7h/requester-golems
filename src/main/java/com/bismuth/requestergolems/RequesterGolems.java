@@ -5,6 +5,8 @@ import com.bismuth.requestergolems.menu.ModMenuTypes;
 import com.bismuth.requestergolems.network.CancelRequesterRequestPayload;
 import com.bismuth.requestergolems.network.SetRequesterRequestPayload;
 import com.bismuth.requestergolems.network.SetRequesterAssignmentPayload;
+import com.bismuth.requestergolems.network.OpenRequesterGolemScreenPayload;
+import com.bismuth.requestergolems.network.RenameRequesterGolemPayload;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
@@ -25,6 +27,14 @@ public class RequesterGolems implements ModInitializer {
 				SetRequesterRequestPayload.TYPE,
 				SetRequesterRequestPayload.CODEC
 		);
+		PayloadTypeRegistry.clientboundPlay().register(
+				OpenRequesterGolemScreenPayload.TYPE,
+				OpenRequesterGolemScreenPayload.CODEC
+		);
+		PayloadTypeRegistry.serverboundPlay().register(
+				RenameRequesterGolemPayload.TYPE,
+				RenameRequesterGolemPayload.CODEC
+		);
 		PayloadTypeRegistry.serverboundPlay().register(
 				SetRequesterAssignmentPayload.TYPE,
 				SetRequesterAssignmentPayload.CODEC
@@ -32,6 +42,7 @@ public class RequesterGolems implements ModInitializer {
 		CancelRequesterRequestPayload.registerServerReceiver();
 		SetRequesterRequestPayload.registerServerReceiver();
 		SetRequesterAssignmentPayload.registerServerReceiver();
+		RenameRequesterGolemPayload.registerServerReceiver();
 		LOGGER.info("Requester Golems initialized.");
 	}
 
