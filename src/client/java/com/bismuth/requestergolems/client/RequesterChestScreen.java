@@ -3,8 +3,10 @@ package com.bismuth.requestergolems.client;
 import com.bismuth.requestergolems.menu.RequesterChestMenu;
 import com.bismuth.requestergolems.network.CancelRequesterRequestPayload;
 import com.bismuth.requestergolems.network.SetRequesterRequestPayload;
+import com.bismuth.requestergolems.network.SetRequesterAssignmentPayload;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -29,6 +31,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	private boolean settingsMode;
 	private int scrollOffset;
 	private Button modeButton;
+	private EditBox assignmentQuery;
 
 	public RequesterChestScreen(RequesterChestMenu menu, Inventory inventory, Component title) {
 		super(menu, inventory, Component.translatable("container.requestergolems.requester_chest"),
@@ -50,6 +53,18 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 							.bounds(this.leftPos + 154, this.topPos + 2, 18, 16)
 							.build()
 			);
+			this.assignmentQuery = this.addRenderableWidget(new EditBox(
+					this.font, this.leftPos + 8, this.topPos + 104, 160, 18,
+					Component.literal("Golem name or ID")
+			));
+			this.assignmentQuery.setMaxLength(32);
+			this.assignmentQuery.setHint(Component.literal("Name or #000042"));
+			this.addRenderableWidget(Button.builder(Component.literal("Assign"), button ->
+					ClientPlayNetworking.send(new SetRequesterAssignmentPayload(this.assignmentQuery.getValue(), true)))
+					.bounds(this.leftPos + 8, this.topPos + 128, 76, 20).build());
+			this.addRenderableWidget(Button.builder(Component.literal("Unassign"), button ->
+					ClientPlayNetworking.send(new SetRequesterAssignmentPayload(this.assignmentQuery.getValue(), false)))
+					.bounds(this.leftPos + 92, this.topPos + 128, 76, 20).build());
 		} else {
 			this.modeButton = this.addRenderableWidget(
 					Button.builder(Component.literal("⚙"), button -> this.setSettingsMode(true))
@@ -352,6 +367,8 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			Component title = Component.translatable("container.requestergolems.active_requests");
 			graphics.text(this.font, title,
 					8, 6, 0xFF404040, false);
+			graphics.text(this.font, Component.literal("Assign owned golems to this chest"),
+					8, 88, 0xFF404040, false);
 
 			int count = this.menu.requestergolems$getActiveRequestCount();
 			for (int visible = 0; visible < SETTINGS_VISIBLE_ROWS; visible++) {
@@ -439,9 +456,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		}
 
 		if (this.settingsMode) {
-			if (this.isInsideModeButton(event.x(), event.y())) {
-				return super.mouseClicked(event, doubleClick);
-			}
+			if (super.mouseClicked(event, doubleClick)) return true;
 
 			if (event.button() == 1 && this.isInsideSettingsList(event.x(), event.y())) {
 				int visible = (int)((event.y() - (this.topPos + SETTINGS_LIST_TOP)) / SETTINGS_ROW_HEIGHT);
