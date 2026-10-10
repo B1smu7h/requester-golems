@@ -106,7 +106,7 @@ public abstract class ChestBlockMixin {
 	}
 
 	@Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
-	private void requestergolems$convertWithDiamond(
+	private void requestergolems$convertWithRedstoneBlock(
 			ItemStack itemStack,
 			BlockState state,
 			Level level,
@@ -117,7 +117,7 @@ public abstract class ChestBlockMixin {
 			CallbackInfoReturnable<InteractionResult> cir
 	) {
 		if (!(state.getBlock() instanceof CopperChestBlock)
-				|| !itemStack.is(Items.DIAMOND)
+				|| !itemStack.is(Items.REDSTONE_BLOCK)
 				|| state.getValue(ChestBlock.TYPE) != ChestType.SINGLE) {
 			return;
 		}
