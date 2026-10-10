@@ -3,6 +3,7 @@ package com.bismuth.requestergolems;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 
@@ -22,7 +23,7 @@ public final class RequesterGolemIdData extends SavedData {
 
     private static final SavedDataType<RequesterGolemIdData> TYPE =
             new SavedDataType<>(RequesterGolems.id("requester_golem_ids"),
-                    RequesterGolemIdData::new, CODEC);
+                    RequesterGolemIdData::new, CODEC, (DataFixTypes) null);
 
     private int nextId;
 
