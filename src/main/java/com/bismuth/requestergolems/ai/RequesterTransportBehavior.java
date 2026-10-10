@@ -453,6 +453,12 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 					|| !requester.requestergolems$hasActiveRequests()) {
 				continue;
 			}
+			if (body instanceof RequesterGolemAccess golemAccess
+					&& !golemAccess.requestergolems$isAssignedTo(
+						level.dimension().identifier().toString(),
+						requester.requestergolems$getIdentity())) {
+				continue;
+			}
 
 			double distance = body.position().distanceToSqr(Vec3.atCenterOf(pos));
 			if (distance < bestDistance) {
