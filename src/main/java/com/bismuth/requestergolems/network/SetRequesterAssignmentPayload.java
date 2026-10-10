@@ -71,12 +71,7 @@ public record SetRequesterAssignmentPayload(String query, boolean assigned) impl
 					chestAccess.requestergolems$getIdentity(),
 					payload.assigned()
 			);
-			player.sendSystemMessage(Component.literal(
-					(payload.assigned() ? "Assigned " : "Unassigned ")
-							+ golemAccess.requestergolems$getDisplayName()
-							+ " (#" + String.format(java.util.Locale.ROOT, "%06d", golemAccess.requestergolems$getPublicId()) + ") "
-							+ (payload.assigned() ? "exclusively to this Requester Chest." : "from this Requester Chest.")
-			));
+
 		});
 	}
 }

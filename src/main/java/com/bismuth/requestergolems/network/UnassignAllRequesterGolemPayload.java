@@ -37,8 +37,7 @@ public record UnassignAllRequesterGolemPayload(int publicId) implements CustomPa
 				return;
 			}
 			access.requestergolems$clearAssignments();
-			player.sendSystemMessage(Component.literal(access.requestergolems$getDisplayName()
-					+ " is now Global and can service any Requester Chest."));
+
 		});
 	}
 }

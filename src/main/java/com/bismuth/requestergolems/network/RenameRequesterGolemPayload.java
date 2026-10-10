@@ -49,7 +49,6 @@ public record RenameRequesterGolemPayload(int publicId, String displayName) impl
 			}
 			if (cleaned.length() > 32) cleaned = cleaned.substring(0, 32);
 			access.requestergolems$setDisplayName(cleaned);
-			player.sendSystemMessage(Component.literal("Requester Golem renamed to " + cleaned + "."));
 		});
 	}
 }
