@@ -49,6 +49,8 @@ public final class RequesterGolemScreen extends Screen {
 		graphics.centeredText(this.font,
 				Component.literal("Public ID: #" + String.format(java.util.Locale.ROOT, "%06d", this.publicId)),
 				this.width / 2, this.height / 2 - 48, 0xFFE0E0E0);
+		graphics.centeredText(this.font, Component.literal("Name: " + this.currentName),
+				this.width / 2, this.height / 2 - 30, 0xFFE0E0E0);
 		if (!this.canEdit) {
 			String status = this.canClaim
 					? "Unowned legacy golem — sneak + empty-hand right-click to claim"
