@@ -194,13 +194,13 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	}
 
 	@Inject(method = "mobInteract", at = @At("HEAD"), cancellable = true)
-	private void requestergolems$convertWithDiamond(
+	private void requestergolems$convertWithRedstoneBlock(
 			Player player,
 			InteractionHand hand,
 			CallbackInfoReturnable<InteractionResult> cir
 	) {
 		if (this.requestergolems$requester || player.getItemInHand(hand).isEmpty()
-				|| !player.getItemInHand(hand).is(Items.DIAMOND)) {
+				|| !player.getItemInHand(hand).is(Items.REDSTONE_BLOCK)) {
 			return;
 		}
 
