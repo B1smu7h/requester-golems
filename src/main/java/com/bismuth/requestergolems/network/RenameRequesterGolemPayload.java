@@ -32,7 +32,7 @@ public record RenameRequesterGolemPayload(int publicId, String displayName) impl
 		ServerPlayNetworking.registerGlobalReceiver(TYPE, (payload, context) -> {
 			if (payload.publicId() <= 0 || payload.displayName() == null || payload.displayName().length() > 128) return;
 			var player = context.player();
-			var level = player.serverLevel();
+			var level = (net.minecraft.server.level.ServerLevel) player.level();
 			var matches = RequesterGolemLookup.findLoaded(level.getServer(), "#" + payload.publicId(), 2);
 			if (matches.size() != 1) return;
 			CopperGolem golem = matches.getFirst();
