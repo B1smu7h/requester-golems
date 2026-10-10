@@ -5,6 +5,9 @@ import java.util.UUID;
 import com.bismuth.requestergolems.RequesterChestAccess;
 import com.bismuth.requestergolems.RequesterGolemAccess;
 import com.bismuth.requestergolems.RequesterGolemIdData;
+import com.bismuth.requestergolems.network.OpenRequesterGolemScreenPayload;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
 import net.minecraft.world.level.block.ChestBlock;
@@ -292,6 +295,30 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 			player.sendSystemMessage(net.minecraft.network.chat.Component.literal("You already own this Requester Golem."));
 		} else {
 			player.sendSystemMessage(net.minecraft.network.chat.Component.literal("This Requester Golem belongs to another player."));
+		}
+		cir.setReturnValue(InteractionResult.SUCCESS);
+	}
+
+	@Inject(method = "mobInteract", at = @At("HEAD"), cancellable = true)
+	private void requestergolems$openIdentityScreen(
+			Player player,
+			InteractionHand hand,
+			CallbackInfoReturnable<InteractionResult> cir
+	) {
+		CopperGolem golem = (CopperGolem) (Object) this;
+		if (!this.requestergolems$requester || hand != InteractionHand.MAIN_HAND
+				|| player.isShiftKeyDown() || !player.getItemInHand(hand).isEmpty()
+				|| !golem.getMainHandItem().isEmpty()) return;
+		if (player.level().isClientSide()) return;
+		if (player instanceof ServerPlayer serverPlayer) {
+			boolean canEdit = this.requestergolems$owner != null
+					&& this.requestergolems$owner.equals(player.getUUID());
+			ServerPlayNetworking.send(serverPlayer, new OpenRequesterGolemScreenPayload(
+					this.requestergolems$publicId,
+					this.requestergolems$displayName,
+					canEdit,
+					this.requestergolems$owner == null
+			));
 		}
 		cir.setReturnValue(InteractionResult.SUCCESS);
 	}
