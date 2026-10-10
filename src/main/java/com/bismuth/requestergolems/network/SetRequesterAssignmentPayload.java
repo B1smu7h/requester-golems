@@ -45,7 +45,7 @@ public record SetRequesterAssignmentPayload(String query, boolean assigned) impl
 					|| !chestAccess.requestergolems$isRequester()
 					|| !(chest.getLevel() instanceof ServerLevel chestLevel)) return;
 
-			var server = player.getServer();
+			var server = chestLevel.getServer();
 			if (server == null) return;
 			List<CopperGolem> matches = RequesterGolemLookup.findLoaded(server, payload.query(), 2);
 			if (matches.isEmpty()) {
