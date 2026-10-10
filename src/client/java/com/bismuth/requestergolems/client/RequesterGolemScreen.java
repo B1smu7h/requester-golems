@@ -35,10 +35,10 @@ public final class RequesterGolemScreen extends Screen {
 			this.nameField.setValue(this.currentName);
 			this.addRenderableWidget(Button.builder(Component.literal("Save name"), button -> {
 				ClientPlayNetworking.send(new RenameRequesterGolemPayload(this.publicId, this.nameField.getValue()));
-				this.minecraft.setScreen(null);
+				this.minecraft.gui.setScreen(null);
 			}).bounds(center - 100, this.height / 2 + 24, 96, 20).build());
 		}
-		this.addRenderableWidget(Button.builder(Component.literal("Done"), button -> this.minecraft.setScreen(null))
+		this.addRenderableWidget(Button.builder(Component.literal("Done"), button -> this.minecraft.gui.setScreen(null))
 				.bounds(center + 4, this.height / 2 + 24, 96, 20).build());
 	}
 
