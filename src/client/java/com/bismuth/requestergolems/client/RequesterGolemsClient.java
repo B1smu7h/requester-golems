@@ -11,7 +11,7 @@ public class RequesterGolemsClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		MenuScreens.register(ModMenuTypes.REQUESTER_CHEST, RequesterChestScreen::new);
 		ClientPlayNetworking.registerGlobalReceiver(OpenRequesterGolemScreenPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> context.client().setScreen(new RequesterGolemScreen(
+				context.client().execute(() -> context.client().gui.setScreen(new RequesterGolemScreen(
 						payload.publicId(), payload.displayName(), payload.canEdit(), payload.canClaim()
 				))));
 	}
