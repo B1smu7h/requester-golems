@@ -34,6 +34,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(CopperGolem.class)
 public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	private static final String REQUESTER_KEY = "requestergolems:requester";
+	private static final String PUBLIC_ID_KEY = "requestergolems:public_id";
+	private static final String OWNER_UUID_KEY = "requestergolems:owner_uuid";
+	private static final String DISPLAY_NAME_KEY = "requestergolems:display_name";
 	private static final String ROLLBACK_ACTIVE_KEY = "requestergolems:rollback_active";
 	private static final String ROLLBACK_X_KEY = "requestergolems:rollback_x";
 	private static final String ROLLBACK_Y_KEY = "requestergolems:rollback_y";
@@ -48,6 +51,9 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	private static final String RECOVERY_SOURCE_Z_KEY = "requestergolems:recovery_source_z";
 
 	private boolean requestergolems$requester;
+	private int requestergolems$publicId;
+	private UUID requestergolems$owner;
+	private String requestergolems$displayName = "Requester Golem";
 	private BlockPos requestergolems$rollbackSource;
 	private UUID requestergolems$recoveryJobId;
 	private BlockPos requestergolems$recoveryRequesterPos;
@@ -61,6 +67,40 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	@Override
 	public void requestergolems$setRequester(boolean requester) {
 		this.requestergolems$requester = requester;
+	}
+
+	@Override
+	public int requestergolems$getPublicId() {
+		return this.requestergolems$publicId;
+	}
+
+	@Override
+	public void requestergolems$setPublicId(int id) {
+		this.requestergolems$publicId = Math.max(0, id);
+	}
+
+	@Override
+	public UUID requestergolems$getOwner() {
+		return this.requestergolems$owner;
+	}
+
+	@Override
+	public void requestergolems$setOwner(UUID owner) {
+		this.requestergolems$owner = owner;
+	}
+
+	@Override
+	public String requestergolems$getDisplayName() {
+		return this.requestergolems$displayName;
+	}
+
+	@Override
+	public void requestergolems$setDisplayName(String name) {
+		String cleaned = name == null ? "" : name.strip().replaceAll("[\\p{Cntrl}]", "");
+		if (cleaned.isEmpty()) cleaned = "Requester Golem";
+		if (cleaned.length() > 32) cleaned = cleaned.substring(0, 32);
+		this.requestergolems$displayName = cleaned;
+		((CopperGolem) (Object) this).setCustomName(net.minecraft.network.chat.Component.literal(cleaned));
 	}
 
 	@Override
@@ -110,6 +150,14 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	@Inject(method = "tick", at = @At("HEAD"))
 	private void requestergolems$rollbackCarriedItem(CallbackInfo ci) {
 		CopperGolem golem = (CopperGolem) (Object) this;
+		if (golem.level() instanceof ServerLevel serverLevel && this.requestergolems$requester) {
+			if (this.requestergolems$publicId <= 0) {
+				this.requestergolems$publicId = RequesterGolemIdData.allocate(serverLevel);
+			}
+			if (this.requestergolems$displayName == null || this.requestergolems$displayName.isBlank()) {
+				this.requestergolems$setDisplayName("Requester Golem");
+			}
+		}
 		if (golem.level().isClientSide() || this.requestergolems$rollbackSource == null) return;
 
 		BlockPos sourcePos = this.requestergolems$rollbackSource;
@@ -206,10 +254,13 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 
 		if (!player.level().isClientSide()) {
 			this.requestergolems$requester = true;
-			player.getItemInHand(hand).consume(1, player);
-
 			CopperGolem golem = (CopperGolem) (Object) this;
-			golem.setCustomName(net.minecraft.network.chat.Component.literal("Requester Golem"));
+			if (golem.level() instanceof ServerLevel serverLevel) {
+				this.requestergolems$publicId = RequesterGolemIdData.allocate(serverLevel);
+			}
+			this.requestergolems$owner = player.getUUID();
+			this.requestergolems$setDisplayName("Requester Golem");
+			player.getItemInHand(hand).consume(1, player);
 		}
 
 		cir.setReturnValue(InteractionResult.SUCCESS);
@@ -218,6 +269,11 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	@Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
 	private void requestergolems$save(ValueOutput output, CallbackInfo ci) {
 		output.putBoolean(REQUESTER_KEY, this.requestergolems$requester);
+		output.putInt(PUBLIC_ID_KEY, this.requestergolems$publicId);
+		output.putString(DISPLAY_NAME_KEY, this.requestergolems$displayName == null ? "Requester Golem" : this.requestergolems$displayName);
+		if (this.requestergolems$owner != null) {
+			output.putString(OWNER_UUID_KEY, this.requestergolems$owner.toString());
+		}
 		if (this.requestergolems$rollbackSource != null) {
 			output.putBoolean(ROLLBACK_ACTIVE_KEY, true);
 			output.putInt(ROLLBACK_X_KEY, this.requestergolems$rollbackSource.getX());
@@ -239,6 +295,14 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	@Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
 	private void requestergolems$load(ValueInput input, CallbackInfo ci) {
 		this.requestergolems$requester = input.getBooleanOr(REQUESTER_KEY, false);
+		this.requestergolems$publicId = Math.max(0, input.getIntOr(PUBLIC_ID_KEY, 0));
+		this.requestergolems$displayName = input.getStringOr(DISPLAY_NAME_KEY, "Requester Golem");
+		String ownerString = input.getStringOr(OWNER_UUID_KEY, "");
+		try {
+			this.requestergolems$owner = ownerString.isBlank() ? null : UUID.fromString(ownerString);
+		} catch (IllegalArgumentException ignored) {
+			this.requestergolems$owner = null;
+		}
 		if (input.getBooleanOr(ROLLBACK_ACTIVE_KEY, false)) {
 			this.requestergolems$rollbackSource = new BlockPos(
 					input.getIntOr(ROLLBACK_X_KEY, 0),
