@@ -266,6 +266,37 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	}
 
 	@Inject(method = "mobInteract", at = @At("HEAD"), cancellable = true)
+	private void requestergolems$claimLegacyGolem(
+			Player player,
+			InteractionHand hand,
+			CallbackInfoReturnable<InteractionResult> cir
+	) {
+		if (!this.requestergolems$requester || hand != InteractionHand.MAIN_HAND
+				|| !player.isShiftKeyDown() || !player.getItemInHand(hand).isEmpty()) {
+			return;
+		}
+		if (player.level().isClientSide()) {
+			cir.setReturnValue(InteractionResult.SUCCESS);
+			return;
+		}
+		if (this.requestergolems$owner == null) {
+			if (this.requestergolems$claimIfUnowned(player.getUUID())) {
+				player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+						"Claimed " + this.requestergolems$displayName + " (#"
+								+ String.format(java.util.Locale.ROOT, "%06d", this.requestergolems$publicId) + ")."
+				), true);
+			} else {
+				player.displayClientMessage(net.minecraft.network.chat.Component.literal("Could not claim this Requester Golem."), true);
+			}
+		} else if (this.requestergolems$owner.equals(player.getUUID())) {
+			player.displayClientMessage(net.minecraft.network.chat.Component.literal("You already own this Requester Golem."), true);
+		} else {
+			player.displayClientMessage(net.minecraft.network.chat.Component.literal("This Requester Golem belongs to another player."), true);
+		}
+		cir.setReturnValue(InteractionResult.SUCCESS);
+	}
+
+	@Inject(method = "mobInteract", at = @At("HEAD"), cancellable = true)
 	private void requestergolems$convertWithRedstoneBlock(
 			Player player,
 			InteractionHand hand,
