@@ -4,6 +4,7 @@ import net.fabricmc.api.ModInitializer;
 import com.bismuth.requestergolems.menu.ModMenuTypes;
 import com.bismuth.requestergolems.network.CancelRequesterRequestPayload;
 import com.bismuth.requestergolems.network.SetRequesterRequestPayload;
+import com.bismuth.requestergolems.network.SetRequesterAssignmentPayload;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
@@ -24,8 +25,13 @@ public class RequesterGolems implements ModInitializer {
 				SetRequesterRequestPayload.TYPE,
 				SetRequesterRequestPayload.CODEC
 		);
+		PayloadTypeRegistry.serverboundPlay().register(
+				SetRequesterAssignmentPayload.TYPE,
+				SetRequesterAssignmentPayload.CODEC
+		);
 		CancelRequesterRequestPayload.registerServerReceiver();
 		SetRequesterRequestPayload.registerServerReceiver();
+		SetRequesterAssignmentPayload.registerServerReceiver();
 		LOGGER.info("Requester Golems initialized.");
 	}
 
