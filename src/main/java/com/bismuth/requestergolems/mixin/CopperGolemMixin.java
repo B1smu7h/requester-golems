@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import com.bismuth.requestergolems.RequesterChestAccess;
 import com.bismuth.requestergolems.RequesterGolemAccess;
+import com.bismuth.requestergolems.RequesterGolemIdData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
 import net.minecraft.world.level.block.ChestBlock;
@@ -27,7 +28,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /**
  * Adds the first piece of Requester Golems state to the vanilla Copper Golem.
  *
- * <p>For V1 development, a diamond converts a Copper Golem into requester
+ * <p>For V1.1, a redstone block converts a Copper Golem into requester
  * mode. The state is persisted with the entity so this is already a real
  * role rather than a temporary runtime flag.</p>
  */
