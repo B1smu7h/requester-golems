@@ -43,7 +43,8 @@ public record SetRequesterAssignmentPayload(String query, boolean assigned) impl
 			ChestBlockEntity chest = menu.requestergolems$getRequesterChest();
 			if (chest == null || !(chest instanceof RequesterChestAccess chestAccess)
 					|| !chestAccess.requestergolems$isRequester()
-					|| !(chest.getLevel() instanceof ServerLevel chestLevel)) return;
+					|| !(chest.getLevel() instanceof ServerLevel chestLevel)
+					|| chestLevel.getBlockEntity(chest.getBlockPos()) != chest) return;
 
 			var server = chestLevel.getServer();
 			if (server == null) return;
