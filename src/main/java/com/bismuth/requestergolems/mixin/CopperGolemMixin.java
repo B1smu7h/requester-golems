@@ -117,6 +117,22 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	}
 
 	@Override
+	public boolean requestergolems$hasAssignmentTo(String dimensionId, UUID requesterChestId) {
+		return dimensionId != null && requesterChestId != null
+				&& this.requestergolems$assignments.contains(dimensionId + "|" + requesterChestId);
+	}
+
+	@Override
+	public boolean requestergolems$isGlobal() {
+		return this.requestergolems$assignments.isEmpty();
+	}
+
+	@Override
+	public void requestergolems$clearAssignments() {
+		this.requestergolems$assignments.clear();
+	}
+
+	@Override
 	public String requestergolems$getDisplayName() {
 		return this.requestergolems$displayName;
 	}
@@ -317,7 +333,8 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 					this.requestergolems$publicId,
 					this.requestergolems$displayName,
 					canEdit,
-					this.requestergolems$owner == null
+					this.requestergolems$owner == null,
+					this.requestergolems$assignments.isEmpty()
 			));
 		}
 		cir.setReturnValue(InteractionResult.SUCCESS);
