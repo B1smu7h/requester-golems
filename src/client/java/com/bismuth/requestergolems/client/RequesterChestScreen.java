@@ -4,10 +4,12 @@ import com.bismuth.requestergolems.menu.RequesterChestMenu;
 import com.bismuth.requestergolems.network.CancelRequesterRequestPayload;
 import com.bismuth.requestergolems.network.SetRequesterRequestPayload;
 import com.bismuth.requestergolems.network.SetRequesterAssignmentPayload;
+import com.bismuth.requestergolems.network.RequestRequesterAssignmentsPayload;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -32,6 +34,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 	private int scrollOffset;
 	private Button modeButton;
 	private EditBox assignmentQuery;
+	private String assignedGolemsText = "Loading…";
 
 	public RequesterChestScreen(RequesterChestMenu menu, Inventory inventory, Component title) {
 		super(menu, inventory, Component.translatable("container.requestergolems.requester_chest"),
@@ -59,12 +62,14 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			));
 			this.assignmentQuery.setMaxLength(32);
 			this.assignmentQuery.setHint(Component.literal("Name or #000042"));
-			this.addRenderableWidget(Button.builder(Component.literal("Assign"), button ->
-					ClientPlayNetworking.send(new SetRequesterAssignmentPayload(this.assignmentQuery.getValue(), true)))
-					.bounds(this.leftPos + 8, this.topPos + 128, 76, 20).build());
-			this.addRenderableWidget(Button.builder(Component.literal("Unassign"), button ->
-					ClientPlayNetworking.send(new SetRequesterAssignmentPayload(this.assignmentQuery.getValue(), false)))
-					.bounds(this.leftPos + 92, this.topPos + 128, 76, 20).build());
+			this.addRenderableWidget(Button.builder(Component.literal("Assign"), button -> {
+				ClientPlayNetworking.send(new SetRequesterAssignmentPayload(this.assignmentQuery.getValue(), true));
+				ClientPlayNetworking.send(new RequestRequesterAssignmentsPayload());
+			}).bounds(this.leftPos + 8, this.topPos + 128, 76, 20).build());
+			this.addRenderableWidget(Button.builder(Component.literal("Unassign"), button -> {
+				ClientPlayNetworking.send(new SetRequesterAssignmentPayload(this.assignmentQuery.getValue(), false));
+				ClientPlayNetworking.send(new RequestRequesterAssignmentsPayload());
+			}).bounds(this.leftPos + 92, this.topPos + 128, 76, 20).build());
 		} else {
 			this.modeButton = this.addRenderableWidget(
 					Button.builder(Component.literal("⚙"), button -> this.setSettingsMode(true))
@@ -79,6 +84,7 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		this.scrollOffset = 0;
 		this.menu.requestergolems$setSettingsView(settings);
 		this.rebuildWidgets();
+		if (settings) ClientPlayNetworking.send(new RequestRequesterAssignmentsPayload());
 	}
 
 
@@ -367,8 +373,17 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 			Component title = Component.translatable("container.requestergolems.active_requests");
 			graphics.text(this.font, title,
 					8, 6, 0xFF404040, false);
-			graphics.text(this.font, Component.literal("Assign owned golems to this chest"),
+			graphics.text(this.font, Component.literal("Assign owned golems"),
 					8, 88, 0xFF404040, false);
+			graphics.text(this.font, Component.literal("Assigned golems:"),
+					8, 151, 0xFF404040, false);
+			String[] assignedLines = this.assignedGolemsText.split("\\n");
+			for (int line = 0; line < Math.min(2, assignedLines.length); line++) {
+				String label = assignedLines[line];
+				while (this.font.width(label) > 160 && label.length() > 3) label = label.substring(0, label.length() - 2) + "…";
+				graphics.text(this.font, Component.literal(label),
+						8, 163 + line * 10, 0xFF404040, false);
+			}
 
 			int count = this.menu.requestergolems$getActiveRequestCount();
 			for (int visible = 0; visible < SETTINGS_VISIBLE_ROWS; visible++) {
@@ -434,6 +449,20 @@ public class RequesterChestScreen extends AbstractContainerScreen<RequesterChest
 		return hours > 0
 				? String.format("%02d:%02d:%02d", hours, minutes, seconds)
 				: String.format("%02d:%02d", minutes, seconds);
+	}
+
+	public void requestergolems$setAssignedGolemsText(String text) {
+		this.assignedGolemsText = text == null || text.isBlank() ? "None" : text;
+	}
+
+	@Override
+	public boolean keyPressed(KeyEvent event) {
+		if (this.settingsMode && this.assignmentQuery != null && this.assignmentQuery.isFocused()
+				&& event.key() != 256) {
+			this.assignmentQuery.keyPressed(event);
+			return true;
+		}
+		return super.keyPressed(event);
 	}
 
 	@Override
