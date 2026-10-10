@@ -11,6 +11,7 @@ public interface RequesterChestAccess {
 	int REQUEST_SLOT_COUNT = 9;
 
 	boolean requestergolems$isRequester();
+	UUID requestergolems$getIdentity();
 	void requestergolems$setRequester(boolean requester);
 
 	boolean requestergolems$isRedstonePowered();
