@@ -337,5 +337,8 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 				this.requestergolems$recoverySourcePos = null;
 			}
 		}
+		if (this.requestergolems$requester) {
+			this.requestergolems$setDisplayName(this.requestergolems$displayName);
+		}
 	}
 }
