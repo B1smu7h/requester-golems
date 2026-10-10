@@ -38,6 +38,8 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	private static final String PUBLIC_ID_KEY = "requestergolems:public_id";
 	private static final String OWNER_UUID_KEY = "requestergolems:owner_uuid";
 	private static final String DISPLAY_NAME_KEY = "requestergolems:display_name";
+	private static final String ASSIGNMENTS_KEY = "requestergolems:assignments";
+	private final java.util.Set<String> requestergolems$assignments = new java.util.HashSet<>();
 	private static final String ROLLBACK_ACTIVE_KEY = "requestergolems:rollback_active";
 	private static final String ROLLBACK_X_KEY = "requestergolems:rollback_x";
 	private static final String ROLLBACK_Y_KEY = "requestergolems:rollback_y";
@@ -88,6 +90,27 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 	@Override
 	public void requestergolems$setOwner(UUID owner) {
 		this.requestergolems$owner = owner;
+	}
+
+	@Override
+	public boolean requestergolems$claimIfUnowned(UUID playerId) {
+		if (!this.requestergolems$requester || playerId == null || this.requestergolems$owner != null) return false;
+		this.requestergolems$owner = playerId;
+		return true;
+	}
+
+	@Override
+	public boolean requestergolems$isAssignedTo(String dimensionId, UUID requesterChestId) {
+		return this.requestergolems$assignments.isEmpty()
+				|| this.requestergolems$assignments.contains(dimensionId + "|" + requesterChestId);
+	}
+
+	@Override
+	public void requestergolems$setAssignedTo(String dimensionId, UUID requesterChestId, boolean assigned) {
+		if (dimensionId == null || requesterChestId == null || dimensionId.contains("|")) return;
+		String key = dimensionId + "|" + requesterChestId;
+		if (assigned) this.requestergolems$assignments.add(key);
+		else this.requestergolems$assignments.remove(key);
 	}
 
 	@Override
@@ -272,6 +295,7 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 		output.putBoolean(REQUESTER_KEY, this.requestergolems$requester);
 		output.putInt(PUBLIC_ID_KEY, this.requestergolems$publicId);
 		output.putString(DISPLAY_NAME_KEY, this.requestergolems$displayName == null ? "Requester Golem" : this.requestergolems$displayName);
+		output.putString(ASSIGNMENTS_KEY, String.join("\\n", this.requestergolems$assignments));
 		if (this.requestergolems$owner != null) {
 			output.putString(OWNER_UUID_KEY, this.requestergolems$owner.toString());
 		}
@@ -298,6 +322,11 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 		this.requestergolems$requester = input.getBooleanOr(REQUESTER_KEY, false);
 		this.requestergolems$publicId = Math.max(0, input.getIntOr(PUBLIC_ID_KEY, 0));
 		this.requestergolems$displayName = input.getStringOr(DISPLAY_NAME_KEY, "Requester Golem");
+		this.requestergolems$assignments.clear();
+		String assignments = input.getStringOr(ASSIGNMENTS_KEY, "");
+		for (String assignment : assignments.split("\\n")) {
+			if (assignment.contains("|") && assignment.length() <= 256) this.requestergolems$assignments.add(assignment);
+		}
 		String ownerString = input.getStringOr(OWNER_UUID_KEY, "");
 		try {
 			this.requestergolems$owner = ownerString.isBlank() ? null : UUID.fromString(ownerString);
