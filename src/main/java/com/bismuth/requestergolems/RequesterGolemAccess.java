@@ -10,6 +10,13 @@ public interface RequesterGolemAccess {
 	boolean requestergolems$isRequester();
 	void requestergolems$setRequester(boolean requester);
 
+	int requestergolems$getPublicId();
+	void requestergolems$setPublicId(int id);
+	UUID requestergolems$getOwner();
+	void requestergolems$setOwner(UUID owner);
+	String requestergolems$getDisplayName();
+	void requestergolems$setDisplayName(String name);
+
 	/**
 	 * Marks a carried stack for physical rollback to its source chest.
 	 * This state lives on the entity rather than only inside a Brain behavior,
