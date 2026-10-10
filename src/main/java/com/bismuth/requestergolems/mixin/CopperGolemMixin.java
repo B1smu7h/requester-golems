@@ -281,17 +281,17 @@ public abstract class CopperGolemMixin implements RequesterGolemAccess {
 		}
 		if (this.requestergolems$owner == null) {
 			if (this.requestergolems$claimIfUnowned(player.getUUID())) {
-				player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+				player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
 						"Claimed " + this.requestergolems$displayName + " (#"
 								+ String.format(java.util.Locale.ROOT, "%06d", this.requestergolems$publicId) + ")."
-				), true);
+				));
 			} else {
-				player.displayClientMessage(net.minecraft.network.chat.Component.literal("Could not claim this Requester Golem."), true);
+				player.sendSystemMessage(net.minecraft.network.chat.Component.literal("Could not claim this Requester Golem."));
 			}
 		} else if (this.requestergolems$owner.equals(player.getUUID())) {
-			player.displayClientMessage(net.minecraft.network.chat.Component.literal("You already own this Requester Golem."), true);
+			player.sendSystemMessage(net.minecraft.network.chat.Component.literal("You already own this Requester Golem."));
 		} else {
-			player.displayClientMessage(net.minecraft.network.chat.Component.literal("This Requester Golem belongs to another player."), true);
+			player.sendSystemMessage(net.minecraft.network.chat.Component.literal("This Requester Golem belongs to another player."));
 		}
 		cir.setReturnValue(InteractionResult.SUCCESS);
 	}
