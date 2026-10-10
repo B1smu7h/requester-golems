@@ -14,6 +14,9 @@ public interface RequesterGolemAccess {
 	void requestergolems$setPublicId(int id);
 	UUID requestergolems$getOwner();
 	void requestergolems$setOwner(UUID owner);
+	boolean requestergolems$claimIfUnowned(UUID playerId);
+	boolean requestergolems$isAssignedTo(String dimensionId, UUID requesterChestId);
+	void requestergolems$setAssignedTo(String dimensionId, UUID requesterChestId, boolean assigned);
 	String requestergolems$getDisplayName();
 	void requestergolems$setDisplayName(String name);
 
