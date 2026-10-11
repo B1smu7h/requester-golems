@@ -131,6 +131,12 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		}
 
 		this.sourceChestPos = this.job.sourceChestPos();
+		// A job may retain a source selected by another golem. Respect this golem's
+		// unreachable-source cache rather than repeatedly sending it to that chest.
+		if (this.sourceChestPos != null && this.inspectedSourceChests.contains(this.sourceChestPos)) {
+			this.sourceChestPos = null;
+			this.job.setSourceChestPos(null);
+		}
 		if (this.sourceChestPos == null) {
 			this.sourceChestPos = this.findSourceChestToInspect(level, body);
 		}
