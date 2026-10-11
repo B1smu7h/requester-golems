@@ -1,7 +1,8 @@
 package com.bismuth.requestergolems.ai;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import com.bismuth.requestergolems.RequesterChestAccess;
@@ -33,6 +34,9 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	private static final int TARGET_INTERACTION_TICKS = 20;
 	// Give navigation 10 seconds to reach a source chest before treating it as unreachable.
 	private static final int SOURCE_NAVIGATION_TIMEOUT_TICKS = 200;
+	// Remember inspected/failed source chests for 30 in-game minutes before reconsidering them.
+	private static final long SOURCE_CACHE_EXPIRATION_TICKS = 36_000L;
+	private static final int MAX_REMEMBERED_SOURCE_CHESTS = 256;
 	private static final int RETRY_COOLDOWN_TICKS = 60;
 	private static final int MAX_CONSECUTIVE_FAILURES = 3;
 
@@ -43,9 +47,9 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	private int interactionTicks;
 	private InteractionPhase interactionPhase = InteractionPhase.NONE;
 	private int retryCooldownTicks;
-	// Per-golem cache for the current requester chest. It is bounded by that chest's search volume
-	// and prevents this golem from repeatedly choosing a chest it could not reach.
-	private final Set<BlockPos> inspectedSourceChests = new HashSet<>();
+	// Per-golem, insertion-ordered cache for the current requester chest. It expires and is capped
+	// so dense storage rooms cannot make this cache grow indefinitely.
+	private final Map<BlockPos, Long> inspectedSourceChests = new LinkedHashMap<>();
 	private BlockPos inspectedRequesterChestPos;
 	private BlockPos timedSourceChestPos;
 	private int sourceNavigationTicks;
@@ -133,7 +137,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		this.sourceChestPos = this.job.sourceChestPos();
 		// A job may retain a source selected by another golem. Respect this golem's
 		// unreachable-source cache rather than repeatedly sending it to that chest.
-		if (this.sourceChestPos != null && this.inspectedSourceChests.contains(this.sourceChestPos)) {
+		if (this.sourceChestPos != null && this.isSourceChestRemembered(level, this.sourceChestPos)) {
 			this.sourceChestPos = null;
 			this.job.setSourceChestPos(null);
 		}
@@ -265,7 +269,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 				int available = Math.max(0, countMatching(source, this.job.stack()) - 1);
 				if (available <= 0) {
-					this.inspectedSourceChests.add(this.sourceChestPos);
+					this.rememberInspectedSourceChest(level, this.sourceChestPos);
 					this.sourceChestPos = null;
 					this.job.setSourceChestPos(null);
 					source.stopOpen(body);
@@ -282,7 +286,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				body.clearOpenedChestPos();
 				this.interactionPhase = InteractionPhase.NONE;
 				if (picked.isEmpty()) {
-					this.inspectedSourceChests.add(this.sourceChestPos);
+					this.rememberInspectedSourceChest(level, this.sourceChestPos);
 					this.sourceChestPos = null;
 					this.job.setSourceChestPos(null);
 					body.setState(CopperGolemState.GETTING_NO_ITEM);
@@ -475,7 +479,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	}
 
 	private void abandonUnreachableSource(ServerLevel level, CopperGolem body, BlockPos sourcePos) {
-		if (sourcePos != null) this.inspectedSourceChests.add(sourcePos.immutable());
+		if (sourcePos != null) this.rememberInspectedSourceChest(level, sourcePos);
 		if (this.interactionPhase == InteractionPhase.PICKING_UP && sourcePos != null) {
 			Container openContainer = getContainer(level, sourcePos, false);
 			if (openContainer != null) openContainer.stopOpen(body);
@@ -489,6 +493,36 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		this.timedSourceChestPos = null;
 		this.sourceNavigationTicks = 0;
 		if (this.job != null) this.job.setSourceChestPos(null);
+	}
+
+	private boolean isSourceChestRemembered(ServerLevel level, BlockPos pos) {
+		this.pruneExpiredSourceChestMemory(level.getGameTime());
+		return this.inspectedSourceChests.containsKey(pos);
+	}
+
+	private void rememberInspectedSourceChest(ServerLevel level, BlockPos pos) {
+		long now = level.getGameTime();
+		this.pruneExpiredSourceChestMemory(now);
+		BlockPos key = pos.immutable();
+		this.inspectedSourceChests.remove(key);
+		this.inspectedSourceChests.put(key, now);
+
+		while (this.inspectedSourceChests.size() > MAX_REMEMBERED_SOURCE_CHESTS) {
+			Iterator<BlockPos> oldest = this.inspectedSourceChests.keySet().iterator();
+			if (!oldest.hasNext()) break;
+			oldest.next();
+			oldest.remove();
+		}
+	}
+
+	private void pruneExpiredSourceChestMemory(long now) {
+		Iterator<Map.Entry<BlockPos, Long>> entries = this.inspectedSourceChests.entrySet().iterator();
+		while (entries.hasNext()) {
+			Map.Entry<BlockPos, Long> entry = entries.next();
+			if (now - entry.getValue() >= SOURCE_CACHE_EXPIRATION_TICKS) {
+				entries.remove();
+			}
+		}
 	}
 
 	private void moveToContainer(ServerLevel level, CopperGolem body, BlockPos containerPos) {
@@ -530,6 +564,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	}
 
 	private BlockPos findSourceChestToInspect(ServerLevel level, CopperGolem body) {
+		this.pruneExpiredSourceChestMemory(level.getGameTime());
 		BlockPos best = null;
 		double bestDistance = Double.MAX_VALUE;
 		BlockPos center = this.requesterChestPos != null ? this.requesterChestPos : body.blockPosition();
@@ -539,7 +574,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				center.offset(REQUEST_RANGE_HORIZONTAL, REQUEST_RANGE_VERTICAL, REQUEST_RANGE_HORIZONTAL))) {
 			BlockEntity entity = level.getBlockEntity(pos);
 			if (!(entity instanceof ChestBlockEntity)) continue;
-			if (this.inspectedSourceChests.contains(pos)) continue;
+			if (this.inspectedSourceChests.containsKey(pos)) continue;
 
 			var state = level.getBlockState(pos);
 			if (!(state.getBlock() instanceof ChestBlock) || state.getBlock() instanceof CopperChestBlock) continue;
