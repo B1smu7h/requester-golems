@@ -1,7 +1,8 @@
 package com.bismuth.requestergolems.ai;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import com.bismuth.requestergolems.RequesterChestAccess;
@@ -31,6 +32,11 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	private static final int REQUEST_RANGE_HORIZONTAL = 32;
 	private static final int REQUEST_RANGE_VERTICAL = 8;
 	private static final int TARGET_INTERACTION_TICKS = 20;
+	// Give navigation 10 seconds to reach a source chest before treating it as unreachable.
+	private static final int SOURCE_NAVIGATION_TIMEOUT_TICKS = 200;
+	// Remember inspected/failed source chests for 30 in-game minutes before reconsidering them.
+	private static final long SOURCE_CACHE_EXPIRATION_TICKS = 36_000L;
+	private static final int MAX_REMEMBERED_SOURCE_CHESTS = 256;
 	private static final int RETRY_COOLDOWN_TICKS = 60;
 	private static final int MAX_CONSECUTIVE_FAILURES = 3;
 
@@ -41,8 +47,12 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	private int interactionTicks;
 	private InteractionPhase interactionPhase = InteractionPhase.NONE;
 	private int retryCooldownTicks;
-	private final Set<BlockPos> inspectedSourceChests = new HashSet<>();
-	private UUID inspectedRequestId;
+	// Per-golem, insertion-ordered cache for the current requester chest. It expires and is capped
+	// so dense storage rooms cannot make this cache grow indefinitely.
+	private final Map<BlockPos, Long> inspectedSourceChests = new LinkedHashMap<>();
+	private BlockPos inspectedRequesterChestPos;
+	private BlockPos timedSourceChestPos;
+	private int sourceNavigationTicks;
 
 	private enum InteractionPhase {
 		NONE,
@@ -106,9 +116,11 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 			return;
 		}
 
-		if (!this.job.requestId().equals(this.inspectedRequestId)) {
+		if (!this.requesterChestPos.equals(this.inspectedRequesterChestPos)) {
 			this.inspectedSourceChests.clear();
-			this.inspectedRequestId = this.job.requestId();
+			this.inspectedRequesterChestPos = this.requesterChestPos.immutable();
+			this.timedSourceChestPos = null;
+			this.sourceNavigationTicks = 0;
 		}
 
 		if (this.job.state() == RequesterJob.State.CANCELLED) {
@@ -123,6 +135,12 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		}
 
 		this.sourceChestPos = this.job.sourceChestPos();
+		// A job may retain a source selected by another golem. Respect this golem's
+		// unreachable-source cache rather than repeatedly sending it to that chest.
+		if (this.sourceChestPos != null && this.isSourceChestRemembered(level, this.sourceChestPos)) {
+			this.sourceChestPos = null;
+			this.job.setSourceChestPos(null);
+		}
 		if (this.sourceChestPos == null) {
 			this.sourceChestPos = this.findSourceChestToInspect(level, body);
 		}
@@ -208,11 +226,27 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				}
 			}
 
-			Vec3 target = Vec3.atCenterOf(this.sourceChestPos);
+			// A selected source may have been broken after discovery. Validate it before
+			// asking for its collision shape or trying to open its inventory.
+			if (!this.isEligibleSourceChest(level, this.sourceChestPos)) {
+				this.abandonUnreachableSource(level, body, this.sourceChestPos);
+				return;
+			}
+
 			if (!this.isInContainerInteractionRange(level, body, this.sourceChestPos)) {
+				if (!this.sourceChestPos.equals(this.timedSourceChestPos)) {
+					this.timedSourceChestPos = this.sourceChestPos.immutable();
+					this.sourceNavigationTicks = 0;
+				}
+				if (++this.sourceNavigationTicks >= SOURCE_NAVIGATION_TIMEOUT_TICKS) {
+					this.abandonUnreachableSource(level, body, this.sourceChestPos);
+					return;
+				}
 				this.moveToContainer(level, body, this.sourceChestPos);
 				return;
 			}
+			this.timedSourceChestPos = null;
+			this.sourceNavigationTicks = 0;
 
 			Container source = getContainer(level, this.sourceChestPos, false);
 			if (source == null) {
@@ -235,7 +269,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 				int available = Math.max(0, countMatching(source, this.job.stack()) - 1);
 				if (available <= 0) {
-					this.inspectedSourceChests.add(this.sourceChestPos);
+					this.rememberInspectedSourceChest(level, this.sourceChestPos);
 					this.sourceChestPos = null;
 					this.job.setSourceChestPos(null);
 					source.stopOpen(body);
@@ -252,7 +286,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				body.clearOpenedChestPos();
 				this.interactionPhase = InteractionPhase.NONE;
 				if (picked.isEmpty()) {
-					this.inspectedSourceChests.add(this.sourceChestPos);
+					this.rememberInspectedSourceChest(level, this.sourceChestPos);
 					this.sourceChestPos = null;
 					this.job.setSourceChestPos(null);
 					body.setState(CopperGolemState.GETTING_NO_ITEM);
@@ -410,9 +444,12 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 	private boolean isInContainerInteractionRange(ServerLevel level, CopperGolem body, BlockPos containerPos) {
 		var state = level.getBlockState(containerPos);
+		var shape = state.getCollisionShape(level, containerPos);
+		// Air and some non-interactive blocks have empty shapes; VoxelShape.bounds()
+		// throws for those, so treat them as non-interactable instead of crashing.
+		if (shape.isEmpty()) return false;
 		double range = this.getInteractionRange(body);
-		AABB targetBounds = state.getCollisionShape(level, containerPos)
-				.bounds()
+		AABB targetBounds = shape.bounds()
 				.inflate(range, 0.5, range)
 				.move(containerPos);
 		AABB bodyBounds = AABB.ofSize(
@@ -430,6 +467,62 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 
 	private Vec3 getMiddleYPosition(CopperGolem body) {
 		return body.position().add(0.0, body.getBoundingBox().getYsize() / 2.0, 0.0);
+	}
+
+	private boolean isEligibleSourceChest(ServerLevel level, BlockPos pos) {
+		if (!(level.getBlockState(pos).getBlock() instanceof ChestBlock chestBlock)
+				|| chestBlock instanceof CopperChestBlock
+				|| !(level.getBlockEntity(pos) instanceof ChestBlockEntity entity)) {
+			return false;
+		}
+		return !(entity instanceof RequesterChestAccess requester && requester.requestergolems$isRequester());
+	}
+
+	private void abandonUnreachableSource(ServerLevel level, CopperGolem body, BlockPos sourcePos) {
+		if (sourcePos != null) this.rememberInspectedSourceChest(level, sourcePos);
+		if (this.interactionPhase == InteractionPhase.PICKING_UP && sourcePos != null) {
+			Container openContainer = getContainer(level, sourcePos, false);
+			if (openContainer != null) openContainer.stopOpen(body);
+			body.clearOpenedChestPos();
+		}
+		body.getNavigation().stop();
+		body.setState(CopperGolemState.IDLE);
+		this.interactionPhase = InteractionPhase.NONE;
+		this.interactionTicks = 0;
+		this.sourceChestPos = null;
+		this.timedSourceChestPos = null;
+		this.sourceNavigationTicks = 0;
+		if (this.job != null) this.job.setSourceChestPos(null);
+	}
+
+	private boolean isSourceChestRemembered(ServerLevel level, BlockPos pos) {
+		this.pruneExpiredSourceChestMemory(level.getGameTime());
+		return this.inspectedSourceChests.containsKey(pos);
+	}
+
+	private void rememberInspectedSourceChest(ServerLevel level, BlockPos pos) {
+		long now = level.getGameTime();
+		this.pruneExpiredSourceChestMemory(now);
+		BlockPos key = pos.immutable();
+		this.inspectedSourceChests.remove(key);
+		this.inspectedSourceChests.put(key, now);
+
+		while (this.inspectedSourceChests.size() > MAX_REMEMBERED_SOURCE_CHESTS) {
+			Iterator<BlockPos> oldest = this.inspectedSourceChests.keySet().iterator();
+			if (!oldest.hasNext()) break;
+			oldest.next();
+			oldest.remove();
+		}
+	}
+
+	private void pruneExpiredSourceChestMemory(long now) {
+		Iterator<Map.Entry<BlockPos, Long>> entries = this.inspectedSourceChests.entrySet().iterator();
+		while (entries.hasNext()) {
+			Map.Entry<BlockPos, Long> entry = entries.next();
+			if (now - entry.getValue() >= SOURCE_CACHE_EXPIRATION_TICKS) {
+				entries.remove();
+			}
+		}
 	}
 
 	private void moveToContainer(ServerLevel level, CopperGolem body, BlockPos containerPos) {
@@ -471,6 +564,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 	}
 
 	private BlockPos findSourceChestToInspect(ServerLevel level, CopperGolem body) {
+		this.pruneExpiredSourceChestMemory(level.getGameTime());
 		BlockPos best = null;
 		double bestDistance = Double.MAX_VALUE;
 		BlockPos center = this.requesterChestPos != null ? this.requesterChestPos : body.blockPosition();
@@ -480,7 +574,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 				center.offset(REQUEST_RANGE_HORIZONTAL, REQUEST_RANGE_VERTICAL, REQUEST_RANGE_HORIZONTAL))) {
 			BlockEntity entity = level.getBlockEntity(pos);
 			if (!(entity instanceof ChestBlockEntity)) continue;
-			if (this.inspectedSourceChests.contains(pos)) continue;
+			if (this.inspectedSourceChests.containsKey(pos)) continue;
 
 			var state = level.getBlockState(pos);
 			if (!(state.getBlock() instanceof ChestBlock) || state.getBlock() instanceof CopperChestBlock) continue;
@@ -813,5 +907,7 @@ public class RequesterTransportBehavior extends Behavior<CopperGolem> {
 		this.carrying = false;
 		this.interactionTicks = 0;
 		this.interactionPhase = InteractionPhase.NONE;
+		this.timedSourceChestPos = null;
+		this.sourceNavigationTicks = 0;
 	}
 }
